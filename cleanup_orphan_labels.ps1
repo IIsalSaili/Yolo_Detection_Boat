@@ -73,8 +73,8 @@ Write-Host "=== Résumé ===" -ForegroundColor Cyan
 if ($TotalOrphans -eq 0) {
     Write-Host "OK - Dataset coherent, aucun orphelin!" -ForegroundColor Green
 } elseif ($Delete) {
-    Write-Host "Nettoyage termine: $TotalOrphans labels supprimes" -ForegroundColor Green
+    Write-Host "Nettoyage determine: $TotalOrphans labels supprimes" -ForegroundColor Green
 } else {
-    Write-Host "$TotalOrphans labels orphelins detectes" -ForegroundColor Yellow
+    Write-Host "$TotalOrphans labels orphelins detects" -ForegroundColor Yellow
     Write-Host "Pour les supprimer: .\cleanup_orphan_labels.ps1 -DatasetPath 'ton/chemin' -Delete" -ForegroundColor Cyan
 }

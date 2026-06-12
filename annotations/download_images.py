@@ -14,13 +14,13 @@ import argparse
 import json
 import time
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.parse import quote
-from urllib.request import urlopen, Request
-from urllib.error import URLError, HTTPError
+from urllib.request import Request, urlopen
 
-IMG_DIR    = Path(__file__).parent / "images"
+IMG_DIR = Path(__file__).parent / "images"
 CACHE_FILE = Path(__file__).parent / "img_cache.json"
-CACHE_JS   = Path(__file__).parent / "img_cache.js"
+CACHE_JS = Path(__file__).parent / "img_cache.js"
 
 # ── Liste complète des slugs Wikipedia (synchronisée avec le HTML) ──────────
 WIKI_SLUGS = [
@@ -217,7 +217,7 @@ def scan_existing():
     found = {}
     for f in IMG_DIR.iterdir():
         if f.suffix.lower() in EXTS:
-            slug = f.stem          # nom sans extension = slug wiki
+            slug = f.stem  # nom sans extension = slug wiki
             found[slug] = f"images/{f.name}"
     return found
 
@@ -236,7 +236,7 @@ def fetch_with_retry(url, timeout=12, max_retries=5):
         except HTTPError as e:
             if e.code == 429:
                 wait = min(float(e.headers.get("Retry-After", delay)), 5)
-                print(f"\n    429 — attente {wait:.0f}s ({attempt+1}/{max_retries})", end=" ", flush=True)
+                print(f"\n    429 — attente {wait:.0f}s ({attempt + 1}/{max_retries})", end=" ", flush=True)
                 time.sleep(wait)
                 delay = min(delay * 2, 5)
             else:
@@ -260,7 +260,7 @@ def main():
 
     IMG_DIR.mkdir(exist_ok=True)
 
-    # 1. Charger le cache existant (JSON)
+    # 1. Charger le cache existent (JSON)
     cache = {}
     if CACHE_FILE.exists():
         cache = json.loads(CACHE_FILE.read_text(encoding="utf-8"))
@@ -288,17 +288,16 @@ def main():
         print(f"[{i:>3}/{len(slugs)}] GET   {slug}", end=" … ", flush=True)
         try:
             data = fetch_json(api_url(slug))
-            img_url = (data.get("originalimage") or {}).get("source") or \
-                      (data.get("thumbnail") or {}).get("source")
+            img_url = (data.get("originalimage") or {}).get("source") or (data.get("thumbnail") or {}).get("source")
 
             if not img_url:
                 print("pas d'image")
                 cache[slug] = None
                 err += 1
             else:
-                ext   = ext_from_url(img_url)
+                ext = ext_from_url(img_url)
                 fname = f"{slug[:80].replace('/', '_')}.{ext}"
-                dest  = IMG_DIR / fname
+                dest = IMG_DIR / fname
                 dest.write_bytes(fetch_with_retry(img_url, timeout=20))
                 cache[slug] = f"images/{fname}"
                 print(f"OK → {fname}")
@@ -317,16 +316,12 @@ def main():
     CACHE_FILE.write_text(json.dumps(cache, indent=2, ensure_ascii=False), encoding="utf-8")
 
     # Générer img_cache.js — fonctionne en file:// et http://
-    entries = ",\n  ".join(
-        f'"{k}": {json.dumps(v)}'
-        for k, v in cache.items() if v is not None
-    )
+    entries = ",\n  ".join(f'"{k}": {json.dumps(v)}' for k, v in cache.items() if v is not None)
     CACHE_JS.write_text(
-        f"// Généré automatiquement par download_images.py\nwindow.IMG_CACHE = {{\n  {entries}\n}};\n",
-        encoding="utf-8"
+        f"// Généré automatiquement par download_images.py\nwindow.IMG_CACHE = {{\n  {entries}\n}};\n", encoding="utf-8"
     )
 
-    print(f"\n{'='*55}")
+    print(f"\n{'=' * 55}")
     print(f"Terminé : {ok} téléchargées · {skip} déjà présentes · {err} sans image")
     print(f"Cache JS : {CACHE_JS}  ({sum(1 for v in cache.values() if v)} images)")
 
