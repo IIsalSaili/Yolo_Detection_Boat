@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Guide — Navires de guerre</title>
+<!-- Généré par download_images.py — contient les chemins locaux des images -->
+<script src="img_cache.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0a0e1a;color:#e2e8f0;min-height:100vh}
+
+/* ── HEADER ── */
+.site-header{background:linear-gradient(135deg,#0d1b2a 0%,#1a2744 100%);border-bottom:1px solid #c9a84c33;padding:20px 32px;display:flex;align-items:center;gap:16px}
+.header-icon{font-size:28px;color:#c9a84c}
+.header-title{font-size:20px;font-weight:700;color:#f0f4ff;letter-spacing:.5px}
+.header-sub{font-size:12px;color:#8899aa;margin-top:2px}
+
+/* ── LAYOUT ── */
+.layout{display:flex;height:calc(100vh - 73px)}
+.sidebar{width:200px;flex-shrink:0;background:#0d1420;border-right:1px solid #1e2d45;padding:16px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.main{flex:1;overflow-y:auto;padding:20px 24px}
+
+/* ── SIDEBAR PILLS ── */
+.sidebar-label{font-size:10px;font-weight:600;color:#4a6080;text-transform:uppercase;letter-spacing:1px;padding:4px 8px;margin-top:8px}
+.pill{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12.5px;color:#8899bb;transition:all .15s;border:none;background:none;width:100%;text-align:left}
+.pill:hover{background:#1a2744;color:#c9d8f0}
+.pill.active{background:#1a2f5a;color:#c9a84c;font-weight:600}
+.pill-count{font-size:10px;color:#4a6080;background:#111827;padding:1px 6px;border-radius:10px}
+.pill.active .pill-count{color:#c9a84c;background:#0d1b2a}
+
+/* ── SEARCH ── */
+.search-wrap{margin-bottom:16px}
+.search{width:100%;padding:10px 14px 10px 38px;background:#0d1420;border:1px solid #1e2d45;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;transition:border-color .2s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%234a6080' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.415l-3.868-3.833zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center}
+.search:focus{border-color:#c9a84c55}
+.search::placeholder{color:#3a5070}
+
+/* ── COUNT ── */
+.count{font-size:12px;color:#4a6080;margin-bottom:14px}
+
+/* ── GRID ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+
+/* ── CARD ── */
+.card{background:#0d1420;border:1px solid #1e2d45;border-radius:10px;overflow:hidden;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s;will-change:transform;contain:layout style;content-visibility:auto;contain-intrinsic-size:0 230px}
+.card:hover{transform:translateY(-3px);border-color:#c9a84c55;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.thumb{width:100%;height:130px;object-fit:cover;display:block}
+.thumb-ph{width:100%;height:130px;background:#111827;display:flex;align-items:center;justify-content:center;font-size:32px;color:#1e2d45}
+.card-body{padding:10px 12px 12px}
+.card-name{font-size:12.5px;font-weight:600;color:#c9d8f0;margin-bottom:3px;line-height:1.3}
+.card-meta{font-size:11px;color:#4a6080;margin-bottom:7px}
+.badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.card-flags{font-size:14px;margin-top:5px;line-height:1;min-height:16px}
+
+/* ── MODAL ── */
+.modal-wrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-wrap.open{display:flex}
+.modal{background:#0d1420;border:1px solid #2a3d5a;border-radius:14px;width:92%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.modal-img{width:100%;height:240px;object-fit:cover;object-position:center;display:block;border-radius:14px 14px 0 0}
+.modal-img-ph{width:100%;height:240px;background:#111827;display:flex;align-items:center;justify-content:center;font-size:56px;color:#1e2d45;border-radius:14px 14px 0 0}
+.modal-body{padding:20px 22px 24px}
+.modal-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.modal-title{font-size:18px;font-weight:700;color:#f0f4ff;line-height:1.2}
+.modal-sub{font-size:12px;color:#c9a84c;margin-top:4px;font-weight:500}
+.close-btn{background:#1a2744;border:none;color:#8899bb;width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:12px;transition:background .15s}
+.close-btn:hover{background:#253a5e;color:#e2e8f0}
+.divider{height:1px;background:#1e2d45;margin:14px 0}
+.specs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.spec{background:#111827;border-radius:8px;padding:10px 12px;border:1px solid #1e2d45}
+.spec-l{font-size:10px;color:#4a6080;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.spec-v{font-size:13px;font-weight:600;color:#c9d8f0;line-height:1.3}
+.wiki-link{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:12px;color:#c9a84c;text-decoration:none;padding:7px 12px;background:#1a2744;border-radius:6px;transition:background .15s}
+.wiki-link:hover{background:#253a5e}
+
+/* ── DISTANCE REF ── */
+.dist-ref{border-top:1px solid #1e2d45;margin-top:auto;padding-top:12px}
+.dist-title{font-size:10px;font-weight:600;color:#4a6080;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.dist-row{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.dist-box{background:#c9a84c22;border:1px solid #c9a84c55;border-radius:3px;flex-shrink:0}
+.dist-label{font-size:11px;color:#8899bb;line-height:1.2}
+.dist-label strong{color:#c9d8f0;display:block}
+
+/* ── EMPTY / LOADER ── */
+.empty,.loader{text-align:center;padding:4rem 0;color:#3a5070;font-size:14px;grid-column:1/-1}
+.loader-icon{font-size:36px;display:block;margin-bottom:12px;animation:spin 2s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── BADGE COLORS ── */
+.b-pa{background:#0c2d4a;color:#5aacf0}
+.b-cr{background:#3a1a0a;color:#e07840}
+.b-cb{background:#3a0a20;color:#e05080}
+.b-dd{background:#0a2a10;color:#4ac060}
+.b-fr{background:#1a1040;color:#8070f0}
+.b-co{background:#083020;color:#30c090}
+.b-sm{background:#1a1810;color:#a09870}
+.b-am{background:#2a0a0a;color:#e06060}
+.b-pa2{background:#0a1a30;color:#4090d0}
+.b-ph{background:#0a1a30;color:#60a0e0}
+.b-au{background:#181818;color:#808080}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <span class="header-icon">⚓</span>
+  <div>
+    <div class="header-title">Guide de reconnaissance — Navires de guerre</div>
+    <div class="header-sub">Classes en service actif · Toutes marines</div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar" id="sidebar" style="display:flex;flex-direction:column;">
+    <!-- filtres injectés par JS -->
+    <div style="flex:1" id="sidebar-filters"></div>
+
+    <!-- Référence taille → distance -->
+    <div class="dist-ref">
+      <div class="dist-title">Taille boîte → Distance</div>
+
+      <div class="dist-row">
+        <div class="dist-box" style="width:52px;height:16px"></div>
+        <div class="dist-label"><strong>Proche</strong>&gt; 8 % hauteur image</div>
+      </div>
+      <div class="dist-row">
+        <div class="dist-box" style="width:28px;height:10px"></div>
+        <div class="dist-label"><strong>Loin</strong>2 – 8 % hauteur image</div>
+      </div>
+      <div class="dist-row">
+        <div class="dist-box" style="width:12px;height:6px"></div>
+        <div class="dist-label"><strong>Très loin</strong>&lt; 2 % hauteur image</div>
+      </div>
+
+      <div style="font-size:10px;color:#3a5070;margin-top:8px;line-height:1.4">
+        Règle rapide : si la boîte est petite par rapport au reste de l'image → loin.
+      </div>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="search-wrap">
+      <input class="search" type="text" id="search" placeholder="Rechercher une classe, un pays, un type…" oninput="renderGrid()"/>
+    </div>
+    <p class="count" id="count"></p>
+    <div class="grid" id="grid">
+      <div class="loader"><span class="loader-icon">⚓</span><br>Chargement…</div>
+    </div>
+  </main>
+
+</div>
+
+<div class="modal-wrap" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-inner"></div>
+</div>
+
+<script>
+const BADGE_CLASS={
+  "Porte-avions":"b-pa","Croiseur":"b-cr","Croiseur de bataille":"b-cb",
+  "Destroyer":"b-dd","Frégate":"b-fr","Corvette":"b-co","Sous-marin":"b-sm",
+  "Navire amphibie":"b-am","Patrouilleur":"b-pa2","Porte-hélicoptères":"b-ph","Autre":"b-au"
+};
+
+const SHIP_LIST=[
+  {name:"Classe Kuznetsov",type:"Porte-avions",depl:"57 700 t",nb:"3",year:1995,ops:"Marine russe, PLAN",wiki:"Kuznetsov-class_aircraft_carrier"},
+  {name:"Classe Cavour",type:"Porte-avions",depl:"27 190 t",nb:"1",year:2008,ops:"Marine italienne",wiki:"Italian_aircraft_carrier_Cavour"},
+  {name:"Classe Chakri Naruebet",type:"Porte-avions",depl:"11 486 t",nb:"1",year:1997,ops:"Marine thaïlandaise",wiki:"HTMS_Chakri_Naruebet"},
+  {name:"Classe Charles de Gaulle",type:"Porte-avions",depl:"40 500 t",nb:"1",year:2001,ops:"Marine française",wiki:"French_aircraft_carrier_Charles_de_Gaulle"},
+  {name:"Classe Gerald R. Ford",type:"Porte-avions",depl:"100 000 t",nb:"3",year:2017,ops:"US Navy",wiki:"Gerald_R._Ford-class_aircraft_carrier"},
+  {name:"Classe Vikrant",type:"Porte-avions",depl:"45 000 t",nb:"1",year:2022,ops:"Marine indienne",wiki:"Vikrant-class_aircraft_carrier"},
+  {name:"Classe Vikramaditya",type:"Porte-avions",depl:"45 400 t",nb:"1",year:2013,ops:"Marine indienne",wiki:"INS_Vikramaditya"},
+  {name:"Classe Nimitz",type:"Porte-avions",depl:"97 000 t",nb:"10",year:1975,ops:"US Navy",wiki:"Nimitz-class_aircraft_carrier"},
+  {name:"Classe Queen Elizabeth",type:"Porte-avions",depl:"70 600 t",nb:"2",year:2017,ops:"Royal Navy",wiki:"Queen_Elizabeth-class_aircraft_carrier"},
+  {name:"Classe Kirov",type:"Croiseur de bataille",depl:"25 860 t",nb:"4",year:1980,ops:"Marine russe",wiki:"Kirov-class_battlecruiser"},
+  {name:"Classe Slava",type:"Croiseur",depl:"11 490 t",nb:"2",year:1982,ops:"Marine russe",wiki:"Slava-class_cruiser"},
+  {name:"Classe Ticonderoga",type:"Croiseur",depl:"9 800 t",nb:"17",year:1982,ops:"US Navy",wiki:"Ticonderoga-class_cruiser"},
+  {name:"Type 051B (Luhai)",type:"Destroyer",depl:"6 100 t",nb:"1",year:1999,ops:"PLAN",wiki:"Type_051B_destroyer"},
+  {name:"Type 051C (Luzhou)",type:"Destroyer",depl:"7 100 t",nb:"2",year:2006,ops:"PLAN",wiki:"Type_051C_destroyer"},
+  {name:"Type 052 (Luhu)",type:"Destroyer",depl:"4 800 t",nb:"2",year:1993,ops:"PLAN",wiki:"Type_052_destroyer"},
+  {name:"Type 052B (Luyang I)",type:"Destroyer",depl:"6 200 t",nb:"2",year:2004,ops:"PLAN",wiki:"Type_052B_destroyer"},
+  {name:"Type 052C (Luyang II)",type:"Destroyer",depl:"7 000 t",nb:"6",year:2004,ops:"PLAN",wiki:"Type_052C_destroyer"},
+  {name:"Type 052D (Luyang III)",type:"Destroyer",depl:"7 500 t",nb:"20+",year:2014,ops:"PLAN",wiki:"Type_052D_destroyer"},
+  {name:"Type 055 (Renhai)",type:"Destroyer",depl:"12 000 t",nb:"8+",year:2020,ops:"PLAN",wiki:"Type_055_destroyer"},
+  {name:"Classe Akizuki (2010)",type:"Destroyer",depl:"6 800 t",nb:"4",year:2012,ops:"JMSDF",wiki:"Akizuki-class_destroyer_(2010)"},
+  {name:"Classe Almirante Brown",type:"Destroyer",depl:"3 360 t",nb:"3",year:1983,ops:"Marine argentine",wiki:"Almirante_Brown-class_destroyer"},
+  {name:"Classe Arleigh Burke",type:"Destroyer",depl:"9 700 t",nb:"70+",year:1991,ops:"US Navy",wiki:"Arleigh_Burke-class_destroyer"},
+  {name:"Classe Asagiri",type:"Destroyer",depl:"5 200 t",nb:"8",year:1988,ops:"JMSDF",wiki:"Asagiri-class_destroyer"},
+  {name:"Classe Atago",type:"Destroyer",depl:"10 000 t",nb:"2",year:2007,ops:"JMSDF",wiki:"Atago-class_destroyer"},
+  {name:"Classe Chungmugong Yi Sun-sin",type:"Destroyer",depl:"6 250 t",nb:"6",year:2003,ops:"Marine coréenne",wiki:"Chungmugong_Yi_Sun-sin-class_destroyer"},
+  {name:"Classe Delhi",type:"Destroyer",depl:"6 200 t",nb:"3",year:1997,ops:"Marine indienne",wiki:"Delhi-class_destroyer"},
+  {name:"Classe Durand de la Penne",type:"Destroyer",depl:"5 560 t",nb:"2",year:1993,ops:"Marina Militare",wiki:"Durand_de_la_Penne-class_destroyer"},
+  {name:"Classe Gwanggaeto le Grand",type:"Destroyer",depl:"3 900 t",nb:"3",year:1998,ops:"Marine coréenne",wiki:"Gwanggaeto_the_Great-class_destroyer"},
+  {name:"Classe Hatakaze",type:"Destroyer",depl:"6 100 t",nb:"2",year:1986,ops:"JMSDF",wiki:"Hatakaze-class_destroyer"},
+  {name:"Classe Hobart",type:"Destroyer",depl:"7 000 t",nb:"3",year:2017,ops:"RAN",wiki:"Hobart-class_destroyer"},
+  {name:"Classe Horizon",type:"Destroyer",depl:"7 050 t",nb:"4",year:2007,ops:"France, Italie",wiki:"Horizon-class_frigate"},
+  {name:"Classe Hyūga",type:"Porte-hélicoptères",depl:"19 000 t",nb:"2",year:2009,ops:"JMSDF",wiki:"Hyūga-class_helicopter_destroyer"},
+  {name:"Classe Izumo",type:"Porte-hélicoptères",depl:"26 000 t",nb:"2",year:2015,ops:"JMSDF",wiki:"Izumo-class_helicopter_destroyer"},
+  {name:"Classe Kashin",type:"Destroyer",depl:"4 390 t",nb:"2",year:1963,ops:"Russie, Inde",wiki:"Kashin-class_destroyer"},
+  {name:"Classe Kee Lung (Kidd)",type:"Destroyer",depl:"9 783 t",nb:"4",year:1981,ops:"Marine taïwanaise",wiki:"Kidd-class_destroyer"},
+  {name:"Classe Kolkata",type:"Destroyer",depl:"7 400 t",nb:"3",year:2014,ops:"Marine indienne",wiki:"Kolkata-class_destroyer"},
+  {name:"Classe Kongō",type:"Destroyer",depl:"9 485 t",nb:"4",year:1993,ops:"JMSDF",wiki:"Kongō-class_destroyer"},
+  {name:"Classe Maya",type:"Destroyer",depl:"10 250 t",nb:"2",year:2020,ops:"JMSDF",wiki:"Maya-class_destroyer"},
+  {name:"Classe Murasame",type:"Destroyer",depl:"6 200 t",nb:"9",year:1996,ops:"JMSDF",wiki:"Murasame-class_destroyer_(1994)"},
+  {name:"Classe Sejong le Grand",type:"Destroyer",depl:"8 200 t",nb:"4",year:2007,ops:"Marine coréenne",wiki:"Sejong_the_Great-class_destroyer"},
+  {name:"Classe Sovremenny",type:"Destroyer",depl:"8 480 t",nb:"6",year:1980,ops:"Russie, PLAN",wiki:"Sovremenny-class_destroyer"},
+  {name:"Classe Takanami",type:"Destroyer",depl:"6 500 t",nb:"5",year:2003,ops:"JMSDF",wiki:"Takanami-class_destroyer"},
+  {name:"Type 42 (Sheffield)",type:"Destroyer",depl:"5 350 t",nb:"1",year:1975,ops:"Royal Navy",wiki:"Type_42_destroyer"},
+  {name:"Type 45 (Daring)",type:"Destroyer",depl:"8 500 t",nb:"6",year:2009,ops:"Royal Navy",wiki:"Type_45_destroyer"},
+  {name:"Classe Udaloy",type:"Destroyer",depl:"7 620 t",nb:"6",year:1980,ops:"Marine russe",wiki:"Udaloy-class_destroyer"},
+  {name:"Classe Visakhapatnam",type:"Destroyer",depl:"7 400 t",nb:"2+",year:2021,ops:"Marine indienne",wiki:"Visakhapatnam-class_destroyer"},
+  {name:"Classe Zumwalt",type:"Destroyer",depl:"15 907 t",nb:"3",year:2016,ops:"US Navy",wiki:"Zumwalt-class_destroyer"},
+  {name:"Classe Álvaro de Bazán (F100)",type:"Frégate",depl:"5 800 t",nb:"5",year:2002,ops:"Marine espagnole",wiki:"Álvaro_de_Bazán-class_frigate"},
+  {name:"Classe Anzac",type:"Frégate",depl:"3 600 t",nb:"11",year:1996,ops:"Australie, NZ",wiki:"Anzac-class_frigate"},
+  {name:"Classe Brandenburg",type:"Frégate",depl:"4 490 t",nb:"4",year:1994,ops:"Marine allemande",wiki:"Brandenburg-class_frigate"},
+  {name:"Classe Bremen",type:"Frégate",depl:"3 800 t",nb:"4",year:1982,ops:"Marine allemande",wiki:"Bremen-class_frigate"},
+  {name:"Classe Carlo Bergamini (FREMM IT)",type:"Frégate",depl:"6 700 t",nb:"6+",year:2013,ops:"Marina Militare",wiki:"Carlo_Bergamini-class_frigate"},
+  {name:"Classe Constellation (FFG-62)",type:"Frégate",depl:"7 400 t",nb:"1+",year:2026,ops:"US Navy",wiki:"Constellation-class_frigate"},
+  {name:"Classe De Zeven Provinciën",type:"Frégate",depl:"6 050 t",nb:"4",year:2002,ops:"Marine néerlandaise",wiki:"De_Zeven_Provinciën-class_frigate"},
+  {name:"Classe FREMM (France)",type:"Frégate",depl:"6 000 t",nb:"8",year:2012,ops:"Marine française",wiki:"FREMM_multipurpose_frigate"},
+  {name:"Classe Fridtjof Nansen",type:"Frégate",depl:"5 290 t",nb:"5",year:2006,ops:"Marine norvégienne",wiki:"Fridtjof_Nansen-class_frigate"},
+  {name:"Classe Halifax",type:"Frégate",depl:"5 235 t",nb:"12",year:1992,ops:"Marine canadienne",wiki:"Halifax-class_frigate"},
+  {name:"Classe Incheon",type:"Frégate",depl:"3 300 t",nb:"6+",year:2013,ops:"Marine coréenne",wiki:"Incheon-class_frigate"},
+  {name:"Classe Jiangkai II (Type 054A)",type:"Frégate",depl:"4 000 t",nb:"30+",year:2008,ops:"PLAN",wiki:"Type_054A_frigate"},
+  {name:"Classe Lekiu",type:"Frégate",depl:"2 270 t",nb:"2",year:1999,ops:"Marine malaisienne",wiki:"Lekiu-class_frigate"},
+  {name:"Classe Lupo",type:"Frégate",depl:"2 500 t",nb:"4",year:1977,ops:"Marine péruvienne",wiki:"Lupo-class_frigate"},
+  {name:"Classe Maestrale",type:"Frégate",depl:"3 200 t",nb:"4",year:1982,ops:"Marina Militare",wiki:"Maestrale-class_frigate"},
+  {name:"Classe Meko 200",type:"Frégate",depl:"3 000 t",nb:"10+",year:1987,ops:"Turquie, Portugal, NZ",wiki:"MEKO#MEKO_200"},
+  {name:"Classe Pohang",type:"Corvette",depl:"1 220 t",nb:"18",year:1984,ops:"Marine coréenne",wiki:"Pohang-class_corvette"},
+  {name:"Classe Sachsen (F124)",type:"Frégate",depl:"5 800 t",nb:"3",year:2004,ops:"Marine allemande",wiki:"Sachsen-class_frigate"},
+  {name:"Classe Shivalik",type:"Frégate",depl:"6 200 t",nb:"3",year:2010,ops:"Marine indienne",wiki:"Shivalik-class_frigate"},
+  {name:"Classe Sigma",type:"Frégate",depl:"1 700 t",nb:"6+",year:2007,ops:"Indonésie, Maroc",wiki:"Sigma-class_corvette"},
+  {name:"Classe Thetis",type:"Frégate",depl:"3 500 t",nb:"4",year:1992,ops:"Marine danoise",wiki:"Thetis-class_ocean_patrol_vessel"},
+  {name:"Classe Type 23 (Duke)",type:"Frégate",depl:"4 900 t",nb:"13",year:1990,ops:"RN, Chili, Malaisie",wiki:"Type_23_frigate"},
+  {name:"Classe Type 26",type:"Frégate",depl:"8 000 t",nb:"3+",year:2026,ops:"Royal Navy",wiki:"Type_26_frigate"},
+  {name:"Classe Valour (MEKO A-200)",type:"Frégate",depl:"3 590 t",nb:"4",year:2006,ops:"Marine sud-africaine",wiki:"Valour-class_frigate"},
+  {name:"Classe Yavuz (MEKO 200TN)",type:"Frégate",depl:"3 400 t",nb:"4",year:1987,ops:"Marine turque",wiki:"Yavuz-class_frigate"},
+  {name:"Classe Braunschweig (K130)",type:"Corvette",depl:"1 840 t",nb:"5+",year:2008,ops:"Marine allemande",wiki:"Braunschweig-class_corvette"},
+  {name:"Classe Buyan-M",type:"Corvette",depl:"949 t",nb:"6+",year:2014,ops:"Marine russe",wiki:"Buyan-class_corvette"},
+  {name:"Classe Flyvefisken",type:"Corvette",depl:"450 t",nb:"9",year:1989,ops:"Marine danoise",wiki:"Flyvefisken-class_patrol_vessel"},
+  {name:"Classe Gowind",type:"Corvette",depl:"2 500 t",nb:"10+",year:2014,ops:"Égypte, Malaisie, Maroc",wiki:"Gowind-class_corvette"},
+  {name:"Classe Hamina",type:"Corvette",depl:"250 t",nb:"4",year:1998,ops:"Marine finlandaise",wiki:"Hamina-class_missile_boat"},
+  {name:"Classe Karakurt",type:"Corvette",depl:"870 t",nb:"6+",year:2018,ops:"Marine russe",wiki:"Karakurt-class_corvette"},
+  {name:"Classe Knud Rasmussen",type:"Patrouilleur",depl:"1 720 t",nb:"2",year:2008,ops:"Marine danoise",wiki:"Knud_Rasmussen-class_patrol_vessel"},
+  {name:"Classe Steregushchiy",type:"Corvette",depl:"2 200 t",nb:"4+",year:2008,ops:"Marine russe",wiki:"Steregushchiy-class_corvette"},
+  {name:"Classe Visby",type:"Corvette",depl:"650 t",nb:"5",year:2002,ops:"Marine suédoise",wiki:"Visby-class_corvette"},
+  {name:"Classe Akula",type:"Sous-marin",depl:"12 770 t",nb:"8",year:1984,ops:"Marine russe",wiki:"Akula-class_submarine"},
+  {name:"Classe Astute",type:"Sous-marin",depl:"7 400 t",nb:"7",year:2010,ops:"Royal Navy",wiki:"Astute-class_submarine"},
+  {name:"Classe Borei",type:"Sous-marin",depl:"24 000 t",nb:"4+",year:2013,ops:"Marine russe",wiki:"Borei-class_submarine"},
+  {name:"Classe Collins",type:"Sous-marin",depl:"3 353 t",nb:"6",year:1996,ops:"RAN",wiki:"Collins-class_submarine"},
+  {name:"Classe Daphné",type:"Sous-marin",depl:"870 t",nb:"3",year:1964,ops:"Pakistan, Portugal",wiki:"Daphné-class_submarine"},
+  {name:"Classe Delta IV",type:"Sous-marin",depl:"18 200 t",nb:"6",year:1985,ops:"Marine russe",wiki:"Delta-class_submarine"},
+  {name:"Classe Gotland",type:"Sous-marin",depl:"1 600 t",nb:"3",year:1996,ops:"Marine suédoise",wiki:"Gotland-class_submarine"},
+  {name:"Classe Kilo / Improved Kilo",type:"Sous-marin",depl:"3 950 t",nb:"25+",year:1982,ops:"Russie, Inde, Iran…",wiki:"Kilo-class_submarine"},
+  {name:"Classe Los Angeles",type:"Sous-marin",depl:"6 927 t",nb:"28",year:1976,ops:"US Navy",wiki:"Los_Angeles-class_submarine"},
+  {name:"Classe Oscar II",type:"Sous-marin",depl:"16 400 t",nb:"6",year:1992,ops:"Marine russe",wiki:"Oscar-class_submarine"},
+  {name:"Classe Oyashio",type:"Sous-marin",depl:"3 600 t",nb:"11",year:1998,ops:"JMSDF",wiki:"Oyashio-class_submarine"},
+  {name:"Classe Rubis",type:"Sous-marin",depl:"2 670 t",nb:"6",year:1983,ops:"Marine française",wiki:"Rubis-class_submarine"},
+  {name:"Classe Scorpène",type:"Sous-marin",depl:"1 700 t",nb:"10+",year:2005,ops:"France, Inde, Brésil…",wiki:"Scorpène-class_submarine"},
+  {name:"Classe Seawolf",type:"Sous-marin",depl:"9 137 t",nb:"3",year:1997,ops:"US Navy",wiki:"Seawolf-class_submarine"},
+  {name:"Classe Sierra",type:"Sous-marin",depl:"9 100 t",nb:"2",year:1987,ops:"Marine russe",wiki:"Sierra-class_submarine"},
+  {name:"Classe Sōryū",type:"Sous-marin",depl:"4 200 t",nb:"12",year:2009,ops:"JMSDF",wiki:"Sōryū-class_submarine"},
+  {name:"Classe Suffren (Barracuda)",type:"Sous-marin",depl:"5 300 t",nb:"6",year:2022,ops:"Marine française",wiki:"Suffren-class_submarine"},
+  {name:"Classe Triomphant",type:"Sous-marin",depl:"14 335 t",nb:"4",year:1997,ops:"Marine française",wiki:"Triomphant-class_submarine"},
+  {name:"Type 039 (Song)",type:"Sous-marin",depl:"2 250 t",nb:"13",year:1999,ops:"PLAN",wiki:"Type_039_submarine"},
+  {name:"Type 093 (Shang)",type:"Sous-marin",depl:"6 000 t",nb:"6+",year:2006,ops:"PLAN",wiki:"Type_093_submarine"},
+  {name:"Type 094 (Jin)",type:"Sous-marin",depl:"11 000 t",nb:"6",year:2007,ops:"PLAN",wiki:"Type_094_submarine"},
+  {name:"Classe Upholder/Victoria",type:"Sous-marin",depl:"2 455 t",nb:"4",year:1990,ops:"Marine canadienne",wiki:"Upholder-class_submarine"},
+  {name:"Classe U212",type:"Sous-marin",depl:"1 830 t",nb:"6+",year:2003,ops:"Allemagne, Italie",wiki:"Type_212_submarine"},
+  {name:"Classe Virginia",type:"Sous-marin",depl:"7 900 t",nb:"20+",year:2004,ops:"US Navy",wiki:"Virginia-class_submarine"},
+  {name:"Classe Yasen",type:"Sous-marin",depl:"13 800 t",nb:"3+",year:2014,ops:"Marine russe",wiki:"Yasen-class_submarine"},
+  {name:"Classe America",type:"Navire amphibie",depl:"45 000 t",nb:"2+",year:2014,ops:"US Navy",wiki:"America-class_amphibious_assault_ship"},
+  {name:"Classe Canberra",type:"Navire amphibie",depl:"27 500 t",nb:"2",year:2014,ops:"RAN",wiki:"Canberra-class_landing_helicopter_dock"},
+  {name:"Classe Dokdo",type:"Navire amphibie",depl:"18 860 t",nb:"2",year:2007,ops:"Marine coréenne",wiki:"Dokdo-class_amphibious_assault_ship"},
+  {name:"Classe Endurance",type:"Navire amphibie",depl:"8 500 t",nb:"4",year:2000,ops:"Marine singapourienne",wiki:"Endurance-class_landing_ship_tank"},
+  {name:"Classe Garibaldi",type:"Porte-avions",depl:"13 850 t",nb:"1",year:1985,ops:"Marina Militare",wiki:"Italian_aircraft_carrier_Giuseppe_Garibaldi"},
+  {name:"Classe Ivan Gren",type:"Navire amphibie",depl:"6 600 t",nb:"2",year:2018,ops:"Marine russe",wiki:"Ivan_Gren-class_landing_ship"},
+  {name:"Classe Makassar",type:"Navire amphibie",depl:"11 394 t",nb:"4",year:2007,ops:"Marine indonésienne",wiki:"Makassar-class_landing_platform_dock"},
+  {name:"Classe Mistral",type:"Navire amphibie",depl:"21 300 t",nb:"3+",year:2006,ops:"France, Égypte",wiki:"Mistral-class_amphibious_assault_ship"},
+  {name:"Classe San Antonio",type:"Navire amphibie",depl:"25 000 t",nb:"12+",year:2006,ops:"US Navy",wiki:"San_Antonio-class_amphibious_transport_dock"},
+  {name:"Classe San Giorgio",type:"Navire amphibie",depl:"8 000 t",nb:"3",year:1987,ops:"Marina Militare",wiki:"San_Giorgio-class_landing_ship_dock"},
+  {name:"Classe Wasp",type:"Navire amphibie",depl:"40 500 t",nb:"7",year:1989,ops:"US Navy",wiki:"Wasp-class_amphibious_assault_ship"},
+  {name:"Classe Yuting II",type:"Navire amphibie",depl:"4 800 t",nb:"10+",year:1995,ops:"PLAN",wiki:"Yuting-class_tank_landing_ship"},
+  {name:"Classe Yuzhao (Type 071)",type:"Navire amphibie",depl:"25 000 t",nb:"6+",year:2007,ops:"PLAN",wiki:"Type_071_amphibious_transport_dock"},
+  // ── Porte-avions supplémentaires ──
+  {name:"Liaoning / Shandong (Type 001/002)",type:"Porte-avions",depl:"60 000 t",nb:"2",year:2012,ops:"PLAN",wiki:"Chinese_aircraft_carrier_Liaoning"},
+  {name:"Fujian (Type 003)",type:"Porte-avions",depl:"80 000 t",nb:"1",year:2025,ops:"PLAN",wiki:"Chinese_aircraft_carrier_Fujian"},
+  // ── Frégates supplémentaires ──
+  {name:"Classe Absalon",type:"Frégate",depl:"6 600 t",nb:"2",year:2005,ops:"Marine danoise",wiki:"Absalon-class_frigate"},
+  {name:"Classe Abukuma",type:"Frégate",depl:"2 550 t",nb:"6",year:1989,ops:"JMSDF",wiki:"Abukuma-class_destroyer_escort"},
+  {name:"Classe Floréal",type:"Frégate",depl:"3 000 t",nb:"6",year:1992,ops:"France, Maroc",wiki:"Floréal-class_frigate"},
+  {name:"Classe Formidable",type:"Frégate",depl:"3 200 t",nb:"6",year:2007,ops:"Marine singapourienne",wiki:"Formidable-class_frigate"},
+  {name:"Classe Hydra (MEKO 200HN)",type:"Frégate",depl:"4 000 t",nb:"4",year:1992,ops:"Marine grecque",wiki:"Hydra-class_frigate"},
+  {name:"Classe Iver Huitfeldt",type:"Frégate",depl:"6 645 t",nb:"3",year:2012,ops:"Marine danoise",wiki:"Iver_Huitfeldt-class_frigate"},
+  {name:"Classe Kang Ding (La Fayette TW)",type:"Frégate",depl:"3 800 t",nb:"6",year:1996,ops:"Marine taïwanaise",wiki:"Kang_Ding-class_frigate"},
+  {name:"Classe Karel Doorman",type:"Frégate",depl:"3 500 t",nb:"8",year:1991,ops:"Pays-Bas, Belgique, Chili, Portugal",wiki:"Karel_Doorman-class_frigate"},
+  {name:"Classe Krivak (Projet 1135)",type:"Frégate",depl:"3 575 t",nb:"13",year:1970,ops:"Russie, Inde",wiki:"Krivak-class_frigate"},
+  {name:"Classe Talwar (Projet 11356)",type:"Frégate",depl:"4 035 t",nb:"8",year:2003,ops:"Marine indienne",wiki:"Talwar-class_frigate"},
+  {name:"Classe Admiral Grigorovich (Projet 11356R)",type:"Frégate",depl:"4 000 t",nb:"5",year:2016,ops:"Marine russe",wiki:"Admiral_Grigorovich-class_frigate"},
+  {name:"Classe La Fayette",type:"Frégate",depl:"3 800 t",nb:"5",year:1996,ops:"Marine française",wiki:"La_Fayette-class_frigate"},
+  {name:"Classe Al Riyadh",type:"Frégate",depl:"3 800 t",nb:"3",year:2002,ops:"Marine saoudienne",wiki:"Al_Riyadh-class_frigate"},
+  {name:"Classe Neustrashimy (Projet 11540)",type:"Frégate",depl:"4 400 t",nb:"2",year:1993,ops:"Marine russe",wiki:"Neustrashimy-class_frigate"},
+  {name:"Classe Nilgiri (Projet 17A)",type:"Frégate",depl:"6 670 t",nb:"4+",year:2025,ops:"Marine indienne",wiki:"Nilgiri-class_frigate_(2019)"},
+  {name:"Classe Niterói",type:"Frégate",depl:"3 355 t",nb:"6",year:1976,ops:"Marine brésilienne",wiki:"Niterói-class_frigate"},
+  {name:"Classe Oliver Hazard Perry",type:"Frégate",depl:"4 200 t",nb:"35",year:1977,ops:"Turquie, Espagne, Taïwan, Égypte, Pologne, Pakistan",wiki:"Oliver_Hazard_Perry-class_frigate"},
+  {name:"Classe Istanbul (TF-100 / MILGEM II)",type:"Frégate",depl:"3 100 t",nb:"4",year:2024,ops:"Marine turque",wiki:"Istanbul-class_frigate"},
+  {name:"Classe Type 21 (Amazon)",type:"Frégate",depl:"2 860 t",nb:"8",year:1974,ops:"Marine pakistanaise",wiki:"Type_21_frigate"},
+  {name:"Classe Type 22 (Broadsword)",type:"Frégate",depl:"4 400 t",nb:"7",year:1979,ops:"Brésil, Chili, Roumanie",wiki:"Type_22_frigate"},
+  {name:"Classe Type 053H3 (Jiangwei II)",type:"Frégate",depl:"2 250 t",nb:"6",year:1999,ops:"PLAN, Bangladesh, Sri Lanka",wiki:"Type_053H3_frigate"},
+  {name:"Classe Type 054 (Jiangkai I)",type:"Frégate",depl:"3 000 t",nb:"2",year:2005,ops:"PLAN",wiki:"Type_054_frigate"},
+  {name:"Classe Ulsan",type:"Frégate",depl:"2 215 t",nb:"2",year:1981,ops:"Marine coréenne",wiki:"Ulsan-class_frigate"},
+  {name:"Classe Vasco da Gama (MEKO 200PN)",type:"Frégate",depl:"3 200 t",nb:"2",year:1991,ops:"Marine portugaise",wiki:"Vasco_da_Gama-class_frigate"},
+  {name:"Classe Brahmaputra",type:"Frégate",depl:"3 850 t",nb:"3",year:2000,ops:"Marine indienne",wiki:"Brahmaputra-class_frigate"},
+  // ── Corvettes supplémentaires ──
+  {name:"Classe Ada (MILGEM)",type:"Corvette",depl:"2 400 t",nb:"7",year:2011,ops:"Turquie, Pakistan, Malaisie",wiki:"Ada-class_corvette"},
+  {name:"Classe Bora (Projet 1239)",type:"Corvette",depl:"1 050 t",nb:"2",year:1997,ops:"Marine russe",wiki:"Bora-class_corvette"},
+  {name:"Classe D'Estienne d'Orves (A69)",type:"Corvette",depl:"1 250 t",nb:"6",year:1979,ops:"France, Argentine, Turquie",wiki:"D'Estienne_d'Orves-class_aviso"},
+  {name:"Classe Diponegoro (SIGMA 9113)",type:"Corvette",depl:"1 720 t",nb:"4",year:2007,ops:"Marine indonésienne",wiki:"Diponegoro-class_corvette"},
+  {name:"Classe Espora (MEKO 140A16)",type:"Corvette",depl:"1 790 t",nb:"6",year:1985,ops:"Marine argentine",wiki:"Espora-class_corvette"},
+  {name:"Freedom (LCS)",type:"Corvette",depl:"3 500 t",nb:"11",year:2008,ops:"US Navy",wiki:"Freedom-class_littoral_combat_ship"},
+  {name:"Independence (LCS)",type:"Corvette",depl:"3 104 t",nb:"17",year:2010,ops:"US Navy",wiki:"Independence-class_littoral_combat_ship"},
+  {name:"Classe Kamorta (Projet 28)",type:"Corvette",depl:"3 300 t",nb:"4",year:2014,ops:"Marine indienne",wiki:"Kamorta-class_corvette"},
+  {name:"Classe Kora",type:"Corvette",depl:"1 500 t",nb:"4",year:1998,ops:"Marine indienne",wiki:"Kora-class_corvette"},
+  {name:"Classe Minerva",type:"Corvette",depl:"1 285 t",nb:"6",year:1987,ops:"Marina Militare",wiki:"Minerva-class_corvette"},
+  {name:"Classe Nanuchka (Projet 1234)",type:"Corvette",depl:"671 t",nb:"10",year:1970,ops:"Russie, Algérie",wiki:"Nanuchka-class_corvette"},
+  {name:"Classe Sa'ar 5 (Eilat)",type:"Corvette",depl:"1 227 t",nb:"3",year:1993,ops:"Marine israélienne",wiki:"Sa'ar_5-class_corvette"},
+  {name:"Classe Skjold",type:"Corvette",depl:"274 t",nb:"6",year:1999,ops:"Marine norvégienne",wiki:"Skjold-class_corvette"},
+  {name:"Classe Type 056 (Jiangdao)",type:"Corvette",depl:"1 500 t",nb:"72",year:2013,ops:"PLAN, Bangladesh, Nigeria, Algérie",wiki:"Type_056_corvette"},
+  // ── Sous-marins supplémentaires ──
+  {name:"Classe Ohio (SSBN/SSGN)",type:"Sous-marin",depl:"18 750 t",nb:"18",year:1981,ops:"US Navy",wiki:"Ohio-class_submarine"},
+  {name:"Classe Vanguard (SSBN)",type:"Sous-marin",depl:"15 900 t",nb:"4",year:1993,ops:"Royal Navy",wiki:"Vanguard-class_submarine"},
+  {name:"Classe Arihant (SSBN)",type:"Sous-marin",depl:"7 000 t",nb:"3",year:2016,ops:"Marine indienne",wiki:"Arihant-class_submarine"},
+  {name:"Classe Type 092 Xia (SSBN)",type:"Sous-marin",depl:"8 000 t",nb:"1",year:1983,ops:"PLAN",wiki:"Type_092_submarine"},
+  {name:"Classe Taigei",type:"Sous-marin",depl:"3 000 t",nb:"5",year:2022,ops:"JMSDF",wiki:"Taigei-class_submarine"},
+  {name:"Classe Type 039A/B Yuan",type:"Sous-marin",depl:"3 600 t",nb:"22",year:2006,ops:"PLAN, Pakistan",wiki:"Type_039A_submarine"},
+  {name:"Classe Type 209",type:"Sous-marin",depl:"1 810 t",nb:"50+",year:1971,ops:"Turquie, Corée du Sud, Grèce, Inde, Brésil, Pérou, Égypte, Chili…",wiki:"Type_209_submarine"},
+  {name:"Classe Type 214",type:"Sous-marin",depl:"1 860 t",nb:"15",year:2007,ops:"Grèce, Corée du Sud, Turquie, Portugal",wiki:"Type_214_submarine"},
+  {name:"Classe Ula (Type 210)",type:"Sous-marin",depl:"1 150 t",nb:"6",year:1989,ops:"Marine norvégienne",wiki:"Ula-class_submarine"},
+  {name:"Classe Walrus",type:"Sous-marin",depl:"2 800 t",nb:"3",year:1990,ops:"Marine néerlandaise",wiki:"Walrus-class_submarine"},
+  {name:"Classe Agosta-90B",type:"Sous-marin",depl:"2 050 t",nb:"4",year:1999,ops:"Pakistan, Espagne",wiki:"Agosta-class_submarine"},
+  {name:"Classe Dolphin",type:"Sous-marin",depl:"2 400 t",nb:"5",year:1999,ops:"Marine israélienne",wiki:"Dolphin-class_submarine"},
+  {name:"Classe Lada (Projet 677)",type:"Sous-marin",depl:"2 743 t",nb:"2",year:2010,ops:"Marine russe",wiki:"Lada-class_submarine"},
+  // ── Navires amphibies supplémentaires ──
+  {name:"Classe Juan Carlos I (LHD)",type:"Navire amphibie",depl:"27 000 t",nb:"1",year:2010,ops:"Marine espagnole",wiki:"Spanish_ship_Juan_Carlos_I"},
+  {name:"TCG Anadolu (LHD)",type:"Navire amphibie",depl:"27 000 t",nb:"1",year:2023,ops:"Marine turque",wiki:"TCG_Anadolu"},
+  {name:"Trieste (LHD)",type:"Navire amphibie",depl:"33 000 t",nb:"1",year:2022,ops:"Marina Militare",wiki:"Italian_landing_helicopter_dock_Trieste"},
+  {name:"Classe Type 075 (Yushen LHD)",type:"Navire amphibie",depl:"40 000 t",nb:"4",year:2021,ops:"PLAN",wiki:"Type_075_landing_helicopter_dock"},
+  {name:"Classe Ōsumi (LST)",type:"Navire amphibie",depl:"13 000 t",nb:"3",year:1998,ops:"JMSDF",wiki:"Ōsumi-class_tank_landing_ship"},
+  {name:"Classe Ropucha (Projet 775)",type:"Navire amphibie",depl:"4 080 t",nb:"11",year:1975,ops:"Marine russe",wiki:"Ropucha-class_landing_ship"},
+  {name:"Classe Rotterdam (LPD)",type:"Navire amphibie",depl:"15 500 t",nb:"2",year:1998,ops:"Marine néerlandaise",wiki:"Rotterdam-class_landing_platform_dock"},
+  {name:"Classe Bay (LSD)",type:"Navire amphibie",depl:"16 160 t",nb:"4",year:2006,ops:"Royal Fleet Auxiliary, RAN",wiki:"Bay-class_landing_ship"},
+];
+
+const seen=new Set();
+const SHIPS=SHIP_LIST.filter(s=>{if(seen.has(s.wiki))return false;seen.add(s.wiki);return true;});
+
+const _TC={},_NC={};
+
+// ── Nation tags ──────────────────────────────────────────────────────────────
+// Dérivé automatiquement depuis le champ ops — pas besoin de toucher les données
+const OPS_NATIONS=[
+  ["US Navy","USA"],["USN","USA"],
+  ["Marine nationale","France"],["Marine française","France"],
+  ["Royal Navy","Royaume-Uni"],["Royal Fleet Auxiliary","Royaume-Uni"],
+  ["Marine russe","Russie"],["Marine soviétique","Russie"],
+  ["PLAN","Chine"],["Marine chinoise","Chine"],
+  ["JMSDF","Japon"],["Marine japonaise","Japon"],
+  ["Marina Militare","Italie"],["Marine italienne","Italie"],
+  ["Marine allemande","Allemagne"],["Deutsche Marine","Allemagne"],
+  ["Marine indienne","Inde"],
+  ["RAN","Australie"],["Marine australienne","Australie"],
+  ["Marine coréenne","Corée du Sud"],["ROK","Corée du Sud"],
+  ["Marine nationale française","France"],
+  ["Marine néerlandaise","Pays-Bas"],["Marine royale néerlandaise","Pays-Bas"],
+  ["Marine royale danoise","Danemark"],["Marine danoise","Danemark"],
+  ["Marine norvégienne","Norvège"],["Marine royale norvégienne","Norvège"],
+  ["Marine espagnole","Espagne"],
+  ["Marine turque","Turquie"],
+  ["Marine canadienne","Canada"],
+  ["Marine grecque","Grèce"],["Marine hellénique","Grèce"],
+  ["Marine portugaise","Portugal"],
+  ["Marine brésilienne","Brésil"],
+  ["Marine singapourienne","Singapour"],
+  ["Marine indonésienne","Indonésie"],
+  ["Marine malaisienne","Malaisie"],["Marine royale malaisienne","Malaisie"],
+  ["Marine pakistanaise","Pakistan"],
+  ["Marine taïwanaise","Taïwan"],
+  ["Marine thaïlandaise","Thaïlande"],
+  ["Marine israelienne","Israël"],["Marine israélienne","Israël"],
+  ["Marine algérienne","Algérie"],
+  ["Marine chilienne","Chili"],
+  ["Marine péruvienne","Pérou"],
+  ["Marine argentine","Argentine"],
+  ["Marine saoudienne","Arabie Saoudite"],["Marine royale saoudienne","Arabie Saoudite"],
+  ["Marine sud-africaine","Afrique du Sud"],
+];
+
+function getNations(ops){
+  if(!ops)return[];
+  const found=new Set();
+  for(const[kw,nation]of OPS_NATIONS){
+    if(ops.includes(kw))found.add(nation);
+  }
+  return[...found];
+}
+
+const imgCache={};
+let activeType="Tous";
+let activeNation="Toutes";
+
+async function loadLocalCache(){
+  // img_cache.js injecte window.IMG_CACHE — fonctionne en file:// et http://
+  const data=window.IMG_CACHE||{};
+  for(const[k,v]of Object.entries(data)) imgCache[k]=v||null;
+}
+
+async function fetchImg(wiki){
+  if(imgCache[wiki]!==undefined)return imgCache[wiki];
+  imgCache[wiki]=null;
+  try{
+    const r=await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wiki)}`);
+    if(!r.ok)return null;
+    const d=await r.json();
+    const src=d.originalimage?.source||d.thumbnail?.source||null;
+    imgCache[wiki]=src;return src;
+  }catch(e){return null;}
+}
+
+function badge(type){
+  const cls=BADGE_CLASS[type]||"b-au";
+  return`<span class="badge ${cls}">${type}</span>`;
+}
+
+
+const FLAG={
+  "USA":"🇺🇸","France":"🇫🇷","Royaume-Uni":"🇬🇧","Russie":"🇷🇺","Chine":"🇨🇳",
+  "Japon":"🇯🇵","Allemagne":"🇩🇪","Italie":"🇮🇹","Corée du Sud":"🇰🇷","Inde":"🇮🇳",
+  "Australie":"🇦🇺","Pays-Bas":"🇳🇱","Danemark":"🇩🇰","Norvège":"🇳🇴","Espagne":"🇪🇸",
+  "Turquie":"🇹🇷","Canada":"🇨🇦","Grèce":"🇬🇷","Portugal":"🇵🇹","Brésil":"🇧🇷",
+  "Singapour":"🇸🇬","Indonésie":"🇮🇩","Malaisie":"🇲🇾","Pakistan":"🇵🇰","Taïwan":"🇹🇼",
+  "Thaïlande":"🇹🇭","Israël":"🇮🇱","Algérie":"🇩🇿","Chili":"🇨🇱","Pérou":"🇵🇪",
+  "Argentine":"🇦🇷","Arabie Saoudite":"🇸🇦","Afrique du Sud":"🇿🇦",
+};
+
+function renderSidebar(){
+  const tc=_TC, nc=_NC;
+  const types=["Tous",...Object.keys(tc).sort()];
+  const nations=["Toutes",...Object.keys(nc).sort((a,b)=>nc[b]-nc[a])];
+
+  document.getElementById("sidebar-filters").innerHTML=
+    `<div class="sidebar-label">Type</div>`+
+    types.map(t=>{
+      const n=t==="Tous"?SHIPS.length:tc[t];
+      return`<button class="pill${t===activeType?" active":""}" onclick="setType('${t}')">
+        <span>${t}</span><span class="pill-count">${n}</span>
+      </button>`;
+    }).join("")+
+    `<div class="sidebar-label" style="margin-top:14px">Nationalité</div>`+
+    nations.map(nat=>{
+      const n=nat==="Toutes"?SHIPS.length:nc[nat];
+      const flag=FLAG[nat]||"🏳️";
+      return`<button class="pill${nat===activeNation?" active":""}" onclick="setNation('${nat}')">
+        <span>${flag} ${nat}</span><span class="pill-count">${n}</span>
+      </button>`;
+    }).join("");
+}
+
+function filtered(){
+  const q=(document.getElementById("search")?.value||"").toLowerCase();
+  return SHIPS.filter(s=>{
+    if(activeType!=="Tous"&&s.type!==activeType)return false;
+    if(activeNation!=="Toutes"&&!s._nations.includes(activeNation))return false;
+    if(q&&!s._nameLow.includes(q)&&!s._opsLow.includes(q)&&!s.type.toLowerCase().includes(q))return false;
+    return true;
+  });
+}
+
+function setType(t){activeType=t;renderSidebar();renderGrid();}
+function setNation(n){activeNation=n;renderSidebar();renderGrid();}
+
+function renderGrid(){
+  const list=filtered();
+  document.getElementById("count").textContent=`${list.length} classe${list.length>1?"s":""} affichée${list.length>1?"s":""}`;
+  if(!list.length){
+    document.getElementById("grid").innerHTML=`<div class="empty">🔍 Aucun résultat</div>`;
+    return;
+  }
+  const html=[];
+  for(const s of list){
+    const src=imgCache[s.wiki]||null;
+    const img=src
+      ?`<img class="thumb" src="${src}" alt="${s.name}" loading="lazy" decoding="async">`
+      :`<div class="thumb-ph">⚓</div>`;
+    const flags=s._nations.map(n=>FLAG[n]||"").join(" ");
+    html.push(`<div class="card" onclick="openModal(${s._idx})" tabindex="0" role="button">
+      ${img}
+      <div class="card-body">
+        <p class="card-name">${s.name}</p>
+        <p class="card-meta">${s.year} · ${s.depl}</p>
+        ${badge(s.type)}
+        ${flags?`<p class="card-flags">${flags}</p>`:""}
+      </div>
+    </div>`);
+  }
+  document.getElementById("grid").innerHTML=html.join("");
+}
+
+async function openModal(idx){
+  const s=SHIPS[idx];
+  const local=imgCache[s.wiki]||null;
+  const src=local||(await fetchImg(s.wiki));
+  const img=src
+    ?`<img class="modal-img" src="${src}" alt="${s.name}">`
+    :`<div class="modal-img-ph">⚓</div>`;
+  document.getElementById("modal-inner").innerHTML=`
+    ${img}
+    <div class="modal-body">
+      <div class="modal-header">
+        <div>
+          <p class="modal-title">${s.name}</p>
+          <p class="modal-sub">${s.type}</p>
+          <p style="font-size:18px;margin-top:4px;letter-spacing:3px">${s._nations.map(n=>FLAG[n]||"").join("")}</p>
+        </div>
+        <button class="close-btn" onclick="closeModal()" aria-label="Fermer">✕</button>
+      </div>
+      <div class="divider"></div>
+      <div class="specs">
+        <div class="spec"><div class="spec-l">Déplacement</div><div class="spec-v">${s.depl}</div></div>
+        <div class="spec"><div class="spec-l">Unités en service</div><div class="spec-v">${s.nb}</div></div>
+        <div class="spec"><div class="spec-l">Mise en service</div><div class="spec-v">${s.year}</div></div>
+        <div class="spec"><div class="spec-l">Type OTAN</div><div class="spec-v">${badge(s.type)}</div></div>
+      </div>
+      <a class="wiki-link" href="https://en.wikipedia.org/wiki/${encodeURIComponent(s.wiki)}" target="_blank" rel="noopener">
+        📖 Lire l'article Wikipedia
+      </a>
+    </div>`;
+  document.getElementById("modal").classList.add("open");
+}
+
+function closeModal(){document.getElementById("modal").classList.remove("open");}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+
+async function init(){
+  // Pré-calcul ici — OPS_NATIONS et getNations sont garantis définis
+  SHIPS.forEach((s,i)=>{
+    s._idx=i;
+    s._nations=getNations(s.ops);
+    s._nameLow=s.name.toLowerCase();
+    s._opsLow=(s.ops||"").toLowerCase();
+    _TC[s.type]=(_TC[s.type]||0)+1;
+    s._nations.forEach(n=>{_NC[n]=(_NC[n]||0)+1;});
+  });
+
+  await loadLocalCache();
+  renderSidebar();
+  renderGrid();
+}
+init();
+</script>
+</body>
+</html>

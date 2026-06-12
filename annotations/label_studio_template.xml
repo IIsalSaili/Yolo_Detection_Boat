@@ -1,0 +1,171 @@
+<View style="font-family:sans-serif; background:#f4f6fa; padding:8px; display:flex; flex-direction:column; gap:6px;">
+
+  <View style="display:flex; flex-direction:row; gap:6px; align-items:flex-start;">
+
+    <!-- IMAGE -->
+    <View style="flex:1; min-width:0;">
+      <Image name="image" value="$image"
+             zoom="true" zoomControl="true"
+             brightnessControl="true" contrastControl="true"
+             rotateControl="false"/>
+    </View>
+
+    <!-- COL 1 : Détection + Statut + Type conditionnel -->
+    <View style="width:180px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;">
+
+      <View style="background:#e8f4fd; padding:7px 8px; border-radius:5px; border:1px solid #b3d4f0;">
+        <Header value="① Détection  [S]" style="color:#0066cc; font-weight:bold; font-size:11px;"/>
+        <RectangleLabels name="bbox" toName="image" showInline="true">
+          <Label value="ship" background="#00C8FF" hotkey="s"/>
+        </RectangleLabels>
+      </View>
+
+      <View style="background:#eef6ee; padding:7px 8px; border-radius:5px; border:1px solid #a8d5a8;">
+        <Header value="② Statut  [C] [M] [U]" style="color:#2a7a2a; font-weight:bold; font-size:11px;"/>
+        <Choices name="status" toName="image" perRegion="true" showInline="true">
+          <Choice value="civil"      hotkey="c"/>
+          <Choice value="militaire"  hotkey="m"/>
+          <Choice value="inconnu"    hotkey="u"/>
+        </Choices>
+      </View>
+
+      <!-- ③ Type MILITAIRE — visible uniquement si statut = militaire -->
+      <View visibleWhen="choice-selected" whenTagName="status" whenChoiceValue="militaire"
+            style="background:#fff0e8; padding:7px 8px; border-radius:5px; border:1px solid #f0b080;">
+        <Header value="③ Type militaire (OTAN)" style="color:#aa4400; font-weight:bold; font-size:11px;"/>
+        <Choices name="ship_type_mil" toName="image" perRegion="true" showInline="true">
+          <Choice value="Porte-avions"      hotkey="a"/>
+          <Choice value="Croiseur"          hotkey="h"/>
+          <Choice value="Destroyer"         hotkey="d"/>
+          <Choice value="Frégate"           hotkey="f"/>
+          <Choice value="Corvette"          hotkey="v"/>
+          <Choice value="Patrouilleur"      hotkey="p"/>
+          <Choice value="Sous-marin"        hotkey="o"/>
+          <Choice value="Bâtiment amphibie" hotkey="y"/>
+          <Choice value="Ravitailleur"      hotkey="j"/>
+          <Choice value="Dragueur de mines" hotkey="x"/>
+        </Choices>
+      </View>
+
+    </View>
+
+    <!-- COL 2 : Type civil OU Nationalité (mutuellement exclusifs) -->
+    <View style="width:220px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;">
+
+      <!-- Type CIVIL — visible uniquement si statut = civil -->
+      <View visibleWhen="choice-selected" whenTagName="status" whenChoiceValue="civil"
+            style="background:#eef6ee; padding:7px 8px; border-radius:5px; border:1px solid #a8d5a8;">
+        <Header value="③ Type civil" style="color:#2a7a2a; font-weight:bold; font-size:11px;"/>
+        <Choices name="ship_type_civ" toName="image" perRegion="true" showInline="true">
+          <Choice value="cargo général"       hotkey="a"/>
+          <Choice value="porte-conteneurs"    hotkey="h"/>
+          <Choice value="pétrolier"           hotkey="d"/>
+          <Choice value="vraquier"            hotkey="f"/>
+          <Choice value="chimiquirier"        hotkey="v"/>
+          <Choice value="méthanier"           hotkey="p"/>
+          <Choice value="ferry / ro-ro"       hotkey="o"/>
+          <Choice value="paquebot"            hotkey="y"/>
+          <Choice value="navire de pêche"     hotkey="j"/>
+          <Choice value="remorqueur"          hotkey="x"/>
+          <Choice value="yacht / voilier"     hotkey="g"/>
+          <Choice value="navire scientifique" hotkey="e"/>
+          <Choice value="offshore"            hotkey="b"/>
+          <Choice value="autre civil"         hotkey="t"/>
+        </Choices>
+      </View>
+
+      <!-- Nationalité — visible uniquement si statut = militaire -->
+      <View visibleWhen="choice-selected" whenTagName="status" whenChoiceValue="militaire"
+            style="background:#f0f4ff; padding:7px 8px; border-radius:5px; border:1px solid #b8ccf0;">
+        <Header value="④ Nationalité  (vide si inconnu)" style="color:#3344aa; font-weight:bold; font-size:11px;"/>
+        <Choices name="origin" toName="image" perRegion="true" showInline="true">
+          <Choice value="France"        hotkey="w"/>
+          <Choice value="USA"           hotkey="z"/>
+          <Choice value="UK"            hotkey="k"/>
+          <Choice value="Russie"        hotkey="l"/>
+          <Choice value="Chine"         hotkey="n"/>
+          <Choice value="Allemagne"/>
+          <Choice value="Italie"/>
+          <Choice value="Espagne"/>
+          <Choice value="Japon"/>
+          <Choice value="Corée du Sud"/>
+          <Choice value="Inde"/>
+          <Choice value="Australie"/>
+          <Choice value="Turquie"/>
+          <Choice value="Pays-Bas"/>
+          <Choice value="Canada"/>
+          <Choice value="Norvège"/>
+          <Choice value="Grèce"/>
+          <Choice value="autre"/>
+          <Choice value="inconnue"/>
+        </Choices>
+      </View>
+
+    </View>
+
+    <!-- COL 3 : Keypoints + Conditions sur 2 sous-colonnes -->
+    <View style="width:220px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;">
+
+      <View style="background:#fffbea; padding:7px 8px; border-radius:5px; border:1px solid #f0d080;">
+        <Header value="⑤ Keypoints  [1]-[6]  (navire > 50px)" style="color:#b07800; font-weight:bold; font-size:11px;"/>
+        <KeyPointLabels name="kp" toName="image" opacity="1.0" size="8">
+          <Label value="proue"      background="#FF3333" hotkey="1"/>
+          <Label value="poupe"      background="#3366FF" hotkey="2"/>
+          <Label value="mât"        background="#FFD700" hotkey="3"/>
+          <Label value="passerelle" background="#FF8C00" hotkey="4"/>
+          <Label value="babord"     background="#00DD88" hotkey="5"/>
+          <Label value="tribord"    background="#FF00CC" hotkey="6"/>
+        </KeyPointLabels>
+      </View>
+
+      <View style="background:#f5f0ff; padding:7px 8px; border-radius:5px; border:1px solid #c9b8f0;">
+        <Header value="⑥ Conditions  (une fois par image)" style="color:#5533aa; font-weight:bold; font-size:11px;"/>
+        <View style="display:flex; flex-direction:row; gap:6px; margin-top:4px;">
+          <View style="flex:1;">
+            <Header value="Météo" style="color:#666; font-size:10px;"/>
+            <Choices name="weather" toName="image">
+              <Choice value="dégagé"      hotkey="F1"/>
+              <Choice value="brume"       hotkey="F2"/>
+              <Choice value="brouillard"  hotkey="F3"/>
+              <Choice value="pluie"       hotkey="F4"/>
+              <Choice value="nuit"        hotkey="F5"/>
+              <Choice value="contre-jour" hotkey="F6"/>
+            </Choices>
+          </View>
+          <View style="flex:1;">
+            <Header value="Distance" style="color:#666; font-size:10px;"/>
+            <Choices name="distance_range" toName="image">
+              <Choice value="proche"     hotkey="7"/>
+              <Choice value="loin"       hotkey="8"/>
+              <Choice value="très loin"  hotkey="9"/>
+            </Choices>
+          </View>
+        </View>
+      </View>
+
+    </View>
+
+  </View>
+
+  <!-- BARRE RACCOURCIS pleine largeur -->
+  <View style="background:#e2e8f0; padding:5px 12px; border-radius:5px; border:1px solid #c0ccd8;
+               display:flex; flex-direction:row; flex-wrap:nowrap;
+               justify-content:space-between; align-items:center;">
+    <Header value="[S] boîte  [Échap] désel." style="color:#0055aa; font-size:10px; font-weight:bold;"/>
+    <Header value="|" style="color:#bbb; font-size:10px;"/>
+    <Header value="[C] civil  [M] mili  [U] ?" style="color:#1a7a1a; font-size:10px; font-weight:bold;"/>
+    <Header value="|" style="color:#bbb; font-size:10px;"/>
+    <Header value="Mili: [A]PA [H]crs [D]des [F]frég [V]corv [P]patr [O]sub [Y]amph [J]ravit [X]mines" style="color:#aa4400; font-size:10px; font-weight:bold;"/>
+    <Header value="|" style="color:#bbb; font-size:10px;"/>
+    <Header value="Civil: [A]cargo [H]cont [D]pétr [F]vrac [O]ferry [Y]paq [J]pêche [X]remq [G]yacht [E]sci" style="color:#2a7a2a; font-size:10px; font-weight:bold;"/>
+    <Header value="|" style="color:#bbb; font-size:10px;"/>
+    <Header value="[W]FR [Z]US [K]UK [L]RU [N]CN (mili seul.)" style="color:#550088; font-size:10px; font-weight:bold;"/>
+    <Header value="|" style="color:#bbb; font-size:10px;"/>
+    <Header value="[1]proue [2]poupe [3]mât [4]pass [5]bâb [6]trib" style="color:#885500; font-size:10px; font-weight:bold;"/>
+    <Header value="|" style="color:#bbb; font-size:10px;"/>
+    <Header value="[7]proche [8]loin [9]T.loin" style="color:#440088; font-size:10px; font-weight:bold;"/>
+    <Header value="|" style="color:#bbb; font-size:10px;"/>
+    <Header value="[Entrée] valider" style="color:#aa0000; font-size:10px; font-weight:bold;"/>
+  </View>
+
+</View>

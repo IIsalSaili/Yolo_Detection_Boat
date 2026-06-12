@@ -1,0 +1,78 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+# YOLO26-SEA — YOLO-SEA (Entropy 2025, 27, 667) ported to the YOLO26 end-to-end NMS-free base,
+# specialized for long-distance maritime targets (tiny objects).
+# Modifications vs stock YOLO26:
+#   1. SESA attention block (SENetV2 + SimAM) after the last backbone C3k2, before SPPF.
+#   2. BiFPN neck (learnable fast-normalized weighted fusion) over P2-P5 instead of PAN P3-P5:
+#      the extra P2/4 level targets very small / distant ships; P6-P7 are dropped (no large
+#      close-range targets at sea-surveillance distances).
+#   3. end2end + reg_max=1 inherited from YOLO26: NMS-free inference, no DFL -> INT8/export friendly.
+# Optional (no retraining needed for either):
+#   - Soft-NMS (ultralytics/utils/nms.py) only applies to non-end2end models; not used here.
+#   - NWD box-similarity blend for tiny objects (ultralytics/utils/metrics.py, USE_NWD) — training-time only.
+# Usage:  model = YOLO("yolo26-sea.yaml")  # or "yolo26s-sea.yaml" to select scale 's'
+
+# Parameters
+nc: 80 # number of classes
+end2end: True # whether to use end-to-end mode
+reg_max: 1 # DFL bins
+scales: # 'n' and 's' are the supported targets for this project (hardware constraint)
+  # [depth, width, max_channels]
+  n: [0.50, 0.25, 1024]
+  s: [0.50, 0.50, 1024]
+  m: [0.50, 1.00, 512]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.50, 512]
+
+# YOLO26-SEA backbone (YOLO26 + SESA before SPPF)
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, Conv, [64, 3, 2]] # 0-P1/2
+  - [-1, 1, Conv, [128, 3, 2]] # 1-P2/4
+  - [-1, 2, C3k2, [256, False, 0.25]] # 2   (P2 source)
+  - [-1, 1, Conv, [256, 3, 2]] # 3-P3/8
+  - [-1, 2, C3k2, [512, False, 0.25]] # 4   (P3 source)
+  - [-1, 1, Conv, [512, 3, 2]] # 5-P4/16
+  - [-1, 2, C3k2, [512, True]] # 6   (P4 source)
+  - [-1, 1, Conv, [1024, 3, 2]] # 7-P5/32
+  - [-1, 2, C3k2, [1024, True]] # 8
+  - [-1, 1, SESA, []] # 9   SESA attention (channel-preserving, SimAM adds 0 params)
+  - [-1, 1, SPPF, [1024, 5, 3, True]] # 10
+  - [-1, 2, C2PSA, [1024]] # 11  (P5 source)
+
+# YOLO26-SEA neck — BiFPN P2-P5 with fast normalized weighted fusion (channels unified to 256)
+head:
+  # ---- project backbone features to a common neck width ----
+  - [2, 1, Conv, [256, 1, 1]] # 12  P2_in
+  - [4, 1, Conv, [256, 1, 1]] # 13  P3_in
+  - [6, 1, Conv, [256, 1, 1]] # 14  P4_in
+  - [11, 1, Conv, [256, 1, 1]] # 15  P5_in
+
+  # ---- top-down pathway ----
+  - [15, 1, nn.Upsample, [None, 2, "nearest"]] # 16  P5 -> P4 scale
+  - [[14, 16], 1, BiFPNAdd2, []] # 17  P4 top-down fusion (P4_in + up(P5_in))
+  - [-1, 2, C3k2, [256, True]] # 18  P4_td
+
+  - [18, 1, nn.Upsample, [None, 2, "nearest"]] # 19  P4_td -> P3 scale
+  - [[13, 19], 1, BiFPNAdd2, []] # 20  P3 top-down fusion (P3_in + up(P4_td))
+  - [-1, 2, C3k2, [256, True]] # 21  P3_td
+
+  - [21, 1, nn.Upsample, [None, 2, "nearest"]] # 22  P3_td -> P2 scale
+  - [[12, 22], 1, BiFPNAdd2, []] # 23  P2 fusion (P2_in + up(P3_td))
+  - [-1, 2, C3k2, [256, True]] # 24  P2_out (very small / distant targets)
+
+  # ---- bottom-up pathway (skip connections on intermediate levels P3/P4) ----
+  - [24, 1, Conv, [256, 3, 2]] # 25  P2_out -> P3 scale
+  - [[13, 21, 25], 1, BiFPNAdd3, []] # 26  P3 out fusion (skip: P3_in + P3_td + down(P2_out))
+  - [-1, 2, C3k2, [256, True]] # 27  P3_out (small targets)
+
+  - [27, 1, Conv, [256, 3, 2]] # 28  P3_out -> P4 scale
+  - [[14, 18, 28], 1, BiFPNAdd3, []] # 29  P4 out fusion (skip: P4_in + P4_td + down(P3_out))
+  - [-1, 2, C3k2, [256, True]] # 30  P4_out (medium targets)
+
+  - [30, 1, Conv, [256, 3, 2]] # 31  P4_out -> P5 scale
+  - [[15, 31], 1, BiFPNAdd2, []] # 32  P5 out fusion (P5_in + down(P4_out))
+  - [-1, 1, C3k2, [256, True, 0.5, True]] # 33  P5_out (large targets)
+
+  - [[24, 27, 30, 33], 1, Detect, [nc]] # 34  Detect(P2, P3, P4, P5)
