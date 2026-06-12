@@ -9,7 +9,7 @@ Usage :
     python train_sea.py                          # YOLO26-SEA, surveillance_marine, 300 epochs, imgsz=1280
     python train_sea.py --nwd                    # + blend NWD dans la loss/assigner (petites cibles)
     python train_sea.py --gen v8                 # architecture YOLOv8-SEA originale
-    python train_sea.py --dataset fpp1           # dataset 21 classes (taxonomie projet complète)
+    python train_sea.py --dataset fpp1           # dataset 21 classes (taxonomie project complète)
     python train_sea.py --dataset 6classfinal    # dataset original 6 classes
     python train_sea.py --imgsz 640              # résolution réduite (plus rapide, moins précis)
     python train_sea.py --quick                  # test rapide 20 epochs
@@ -21,14 +21,15 @@ Usage :
 
 import argparse
 from pathlib import Path
+
 from ultralytics import YOLO
 
 ROOT = Path(__file__).parent
 
 DATASETS = {
     "surveillance": ROOT / "surveillance_marine" / "data.yaml",
-    "6classfinal":  ROOT / "6classfinal" / "data.yaml",
-    "fpp1":         ROOT / "fpp1" / "data.yaml",   # LabelDeZero, 21 classes (10 mil OTAN + 11 civ)
+    "6classfinal": ROOT / "6classfinal" / "data.yaml",
+    "fpp1": ROOT / "fpp1" / "data.yaml",  # LabelDeZero, 21 classes (10 mil OTAN + 11 civ)
 }
 
 # Le scale est inséré dans le nom du yaml (ex. yolo26s-sea.yaml) : Ultralytics retire la lettre
@@ -49,41 +50,61 @@ PRETRAIN_PT = {"26": "yolo26{scale}.pt", "v8": "yolov8{scale}.pt"}
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--gen", choices=["26", "v8"], default="26",
-                   help="Génération du modèle : 26 = YOLO26-SEA NMS-free P2-P5 (défaut), "
-                        "v8 = YOLOv8-SEA du papier")
-    p.add_argument("--dataset", choices=["surveillance", "6classfinal", "fpp1"],
-                   default="surveillance")
-    p.add_argument("--imgsz",    type=int, default=1280,
-                   help="Résolution entrainement. 1280 recommandé pour longue distance (defaut), "
-                        "640 si VRAM insuffisante")
-    p.add_argument("--batch",    type=int, default=None,
-                   help="Batch size (auto : gen 26 → 6 à 1280 [tête P2 plus lourde], "
-                        "gen v8 → 8 à 1280 ; 16 à 640)")
-    p.add_argument("--quick",    action="store_true", help="20 epochs pour tester le pipeline")
+    p.add_argument(
+        "--gen",
+        choices=["26", "v8"],
+        default="26",
+        help="Génération du modèle : 26 = YOLO26-SEA NMS-free P2-P5 (défaut), v8 = YOLOv8-SEA du papier",
+    )
+    p.add_argument("--dataset", choices=["surveillance", "6classfinal", "fpp1"], default="surveillance")
+    p.add_argument(
+        "--imgsz",
+        type=int,
+        default=1280,
+        help="Résolution entrainement. 1280 recommandé pour longue distance (default), 640 si VRAM insuffisante",
+    )
+    p.add_argument(
+        "--batch",
+        type=int,
+        default=None,
+        help="Batch size (auto : gen 26 → 6 à 1280 [tête P2 plus lourde], gen v8 → 8 à 1280 ; 16 à 640)",
+    )
+    p.add_argument("--quick", action="store_true", help="20 epochs pour tester le pipeline")
     p.add_argument("--baseline", action="store_true")
-    p.add_argument("--scale",    choices=["n", "s"], default="n")
-    p.add_argument("--epochs",   type=int, default=None)
-    p.add_argument("--nwd",      action="store_true",
-                   help="Blend NWD (Normalized Wasserstein Distance) dans la box loss et "
-                        "l'assigner — recommandé pour les très petites cibles")
-    p.add_argument("--nwd-ratio", type=float, default=0.5,
-                   help="Part de NWD dans le blend (0 = CIoU pur, 1 = NWD pur ; défaut 0.5)")
-    p.add_argument("--nwd-c",    type=float, default=12.8,
-                   help="Constante C de la NWD en pixels (~taille moyenne des cibles ; défaut 12.8)")
-    p.add_argument("--no-pretrain", action="store_true",
-                   help="Ne pas charger les poids COCO pour le backbone")
-    p.add_argument("--resume",   type=str, default=None)
-    p.add_argument("--device",   type=str, default="auto",
-                   help="'auto' (défaut : cuda si dispo sinon cpu), 'cpu', '0', '0,1' …")
+    p.add_argument("--scale", choices=["n", "s"], default="n")
+    p.add_argument("--epochs", type=int, default=None)
+    p.add_argument(
+        "--nwd",
+        action="store_true",
+        help="Blend NWD (Normalized Wasserstein Distance) dans la box loss et "
+        "l'assigner — recommandé pour les très petites cibles",
+    )
+    p.add_argument(
+        "--nwd-ratio",
+        type=float,
+        default=0.5,
+        help="Part de NWD dans le blend (0 = CIoU pur, 1 = NWD pur ; défaut 0.5)",
+    )
+    p.add_argument(
+        "--nwd-c",
+        type=float,
+        default=12.8,
+        help="Constante C de la NWD en pixels (~taille moyenne des cibles ; défaut 12.8)",
+    )
+    p.add_argument("--no-pretrain", action="store_true", help="Ne pas charger les poids COCO pour le backbone")
+    p.add_argument("--resume", type=str, default=None)
+    p.add_argument(
+        "--device", type=str, default="auto", help="'auto' (défaut : cuda si dispo sinon cpu), 'cpu', '0', '0,1' …"
+    )
     return p.parse_args()
 
 
 def resolve_device(arg):
-    """auto → 'cuda:0' si un GPU CUDA est dispo, sinon 'cpu'. Sinon valeur telle quelle."""
+    """Auto → 'cuda:0' si un GPU CUDA est dispo, sinon 'cpu'. Sinon valeur telle quelle."""
     if arg != "auto":
         return arg
     import torch
+
     return "cuda:0" if torch.cuda.is_available() else "cpu"
 
 
@@ -107,10 +128,10 @@ def main():
 
     if args.baseline:
         model_cfg = BASELINE_YAML[args.gen].format(scale=args.scale)
-        run_name  = f"baseline_{'yolo26' if args.gen == '26' else 'yolov8'}{args.scale}_{args.dataset}"
+        run_name = f"baseline_{'yolo26' if args.gen == '26' else 'yolov8'}{args.scale}_{args.dataset}"
     else:
         model_cfg = str(SEA_YAML[args.gen]).format(scale=args.scale)
-        run_name  = f"yolo_sea{args.gen}_{args.dataset}_{args.scale}_i{args.imgsz}"
+        run_name = f"yolo_sea{args.gen}_{args.dataset}_{args.scale}_i{args.imgsz}"
         if args.nwd:
             run_name += "_nwd"
 
@@ -124,19 +145,20 @@ def main():
     # NWD : flags globaux lus par BboxLoss (utils/loss.py) et TaskAlignedAssigner (utils/tal.py).
     if args.nwd:
         import ultralytics.utils.metrics as metrics
+
         metrics.USE_NWD = True
         metrics.NWD_RATIO = args.nwd_ratio
         metrics.NWD_C = args.nwd_c
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Modele   : {model_cfg}")
     print(f"Dataset  : {data_yaml}")
     print(f"imgsz    : {args.imgsz}  batch={batch}")
     print(f"Epochs   : {epochs}")
-    print(f"NWD      : {'ON (ratio=%.2f, C=%.1f)' % (args.nwd_ratio, args.nwd_c) if args.nwd else 'off'}")
+    print(f"NWD      : {f'ON (ratio={args.nwd_ratio:.2f}, C={args.nwd_c:.1f})' if args.nwd else 'off'}")
     print(f"Device   : {device}")
     print(f"Run      : {run_name}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     if args.resume:
         model = YOLO(args.resume)
@@ -155,29 +177,26 @@ def main():
         epochs=epochs,
         imgsz=args.imgsz,
         batch=batch,
-
         # ── Optimizer ────────────────────────────────────────────────
         optimizer="SGD",
         lr0=0.01,
-        lrf=0.01,           # lr finale = lr0 * lrf (cosine schedule)
+        lrf=0.01,  # lr finale = lr0 * lrf (cosine schedule)
         momentum=0.937,
         weight_decay=0.0005,
-        warmup_epochs=5,    # warmup plus long : SESA+BiFPN partent de zéro
+        warmup_epochs=5,  # warmup plus long : SESA+BiFPN partent de zéro
         warmup_momentum=0.8,
-        cos_lr=True,        # cosine decay > step decay sur longue durée
-
+        cos_lr=True,  # cosine decay > step decay sur longue durée
         # ── Loss weights — priorité détection sur classification ──────
         # L'objectif est de détecter à longue distance ; la classification
         # viendra d'une tête dédiée plus tard.
-        box=10.0,           # localisation prioritaire (défaut Ultralytics : 7.5)
-        cls=0.3,            # classification moins pénalisée (défaut : 0.5)
-        dfl=1.5,            # gen 26 (reg_max=1) : ce poids pondère la loss L1 de raffinement
-
+        box=10.0,  # localization prioritaire (défaut Ultralytics : 7.5)
+        cls=0.3,  # classification moins pénalisée (défaut : 0.5)
+        dfl=1.5,  # gen 26 (reg_max=1) : ce poids pondère la loss L1 de raffinement
         # ── Augmentations orientées petites cibles ───────────────────
-        # copy_paste : colle des objets annotés dans d'autres images →
+        # copy_paste : colle des objects annotés dans d'autres images →
         # multiplie artificiellement les petits bateaux lointains.
         copy_paste=0.3,
-        # scale plus large : le modèle voit des objets entre 10% et 90%
+        # scale plus large : le modèle voit des objects entre 10% et 90%
         # de la taille originale → apprend à détecter sur toute la gamme.
         scale=0.9,
         # Mosaic actif jusqu'aux 30 derniers epochs pour finir proprement.
@@ -192,7 +211,6 @@ def main():
         # Désaturation légère : brouillard, brume, contre-jour.
         hsv_s=0.5,
         hsv_v=0.4,
-
         # ── Eval / sauvegarde ─────────────────────────────────────────
         device=device,
         workers=8,
@@ -205,7 +223,7 @@ def main():
         verbose=True,
     )
 
-    print(f"\n=== Entrainement termine ===")
+    print("\n=== Entrainement determine ===")
     print(f"Meilleurs poids : {results.save_dir}/weights/best.pt")
     print(f"mAP@0.5        : {results.results_dict.get('metrics/mAP50(B)', 'N/A'):.4f}")
     print(f"mAP@0.5:0.95   : {results.results_dict.get('metrics/mAP50-95(B)', 'N/A'):.4f}")

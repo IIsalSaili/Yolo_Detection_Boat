@@ -25,16 +25,15 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
-__all__ = ("SENetV2", "SimAM", "SESA")
+__all__ = ("SESA", "SENetV2", "SimAM")
 
 
 class SENetV2(nn.Module):
     """SENetV2 — Squeeze-aggregated Excitation channel recalibration.
 
-    Extends classic Squeeze-and-Excitation with multiple parallel ("aggregated") squeeze branches
-    whose representations are concatenated before excitation, capturing richer channel-wise and
-    global statistics. The block recalibrates channels via a learned multiplicative gate and keeps
-    the number of channels unchanged.
+    Extends classic Squeeze-and-Excitation with multiple parallel ("aggregated") squeeze branches whose representations
+    are concatenated before excitation, capturing richer channel-wise and global statistics. The block recalibrates
+    channels via a learned multiplicative gate and keeps the number of channels unchanged.
 
     Reference: SENetV2 — Aggregated Dense Layer for Channelwise and Global Representations.
     """
@@ -68,8 +67,8 @@ class SENetV2(nn.Module):
 class SimAM(nn.Module):
     """SimAM — parameter-free spatial attention module.
 
-    Computes a per-neuron energy from the local self-similarity within each channel and uses its
-    inverse (via a sigmoid) to weight the activations. Introduces **zero** learnable parameters.
+    Computes a per-neuron energy from the local self-similarity within each channel and uses its inverse (via a sigmoid)
+    to weight the activations. Introduces **zero** learnable parameters.
 
     Energy: e*_t = 4(σ² + λ) / ((t − μ̂)² + 2σ² + 2λ), with X̃ = sigmoid(1/E) · X.
 
@@ -80,8 +79,8 @@ class SimAM(nn.Module):
         """Initialize SimAM.
 
         Args:
-            c1 (int, optional): Unused (kept for a uniform constructor signature with other attention
-                modules so the model parser can pass channel counts positionally).
+            c1 (int, optional): Unused (kept for a uniform constructor signature with other attention modules so the
+                model parser can pass channel counts positionally).
             e_lambda (float): Regularization coefficient λ in the energy function.
         """
         super().__init__()
@@ -90,7 +89,7 @@ class SimAM(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply parameter-free spatial attention."""
-        b, c, h, w = x.size()
+        _b, _c, h, w = x.size()
         n = w * h - 1  # number of other neurons in the channel
         x_minus_mu_square = (x - x.mean(dim=[2, 3], keepdim=True)).pow(2)
         y = x_minus_mu_square / (4 * (x_minus_mu_square.sum(dim=[2, 3], keepdim=True) / n + self.e_lambda)) + 0.5
@@ -100,9 +99,8 @@ class SimAM(nn.Module):
 class SESA(nn.Module):
     """SESA — SENetV2 (channel) followed by SimAM (spatial) attention.
 
-    Channel-preserving fused attention block from YOLO-SEA. SENetV2 recalibrates channels first, then
-    SimAM applies parameter-free spatial attention. Designed to sit after the last backbone ``C2f``
-    block and before ``SPPF``.
+    Channel-preserving fused attention block from YOLO-SEA. SENetV2 recalibrates channels first, then SimAM applies
+    parameter-free spatial attention. Designed to sit after the last backbone ``C2f`` block and before ``SPPF``.
     """
 
     def __init__(self, c1: int, reduction: int = 16, cardinality: int = 4, e_lambda: float = 1e-4):
