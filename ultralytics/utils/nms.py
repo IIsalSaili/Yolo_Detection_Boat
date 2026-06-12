@@ -347,8 +347,7 @@ class TorchNMS:
             score_thres (float): Boxes whose decayed score falls below this are dropped.
 
         Returns:
-            keep (torch.Tensor): Indices (into the input) of surviving boxes, ordered by decayed
-                score (descending).
+            keep (torch.Tensor): Indices (into the input) of surviving boxes, ordered by decayed score (descending).
             scores_out (torch.Tensor): Per-box updated scores aligned to the original input indexing.
 
         Examples:
