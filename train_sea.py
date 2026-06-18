@@ -29,6 +29,9 @@ DATASETS = {
     "surveillance": ROOT / "surveillance_marine" / "data.yaml",
     "6classfinal":  ROOT / "6classfinal" / "data.yaml",
     "fpp1":         ROOT / "fpp1" / "data.yaml",   # LabelDeZero, 21 classes (10 mil OTAN + 11 civ)
+    # combined : fpp1 (jeu vidéo) + ship.v7 (réel), ~54k images. Toutes les boîtes sont
+    # annotées en classe 20 (unknown) → s'entraîne en détection mono-classe avec --single-cls.
+    "combined":     ROOT / "datasets" / "combined" / "data.yaml",
 }
 
 # Le scale est inséré dans le nom du yaml (ex. yolo26s-sea.yaml) : Ultralytics retire la lettre
@@ -52,8 +55,11 @@ def parse_args():
     p.add_argument("--gen", choices=["26", "v8"], default="26",
                    help="Génération du modèle : 26 = YOLO26-SEA NMS-free P2-P5 (défaut), "
                         "v8 = YOLOv8-SEA du papier")
-    p.add_argument("--dataset", choices=["surveillance", "6classfinal", "fpp1"],
+    p.add_argument("--dataset", choices=["surveillance", "6classfinal", "fpp1", "combined"],
                    default="surveillance")
+    p.add_argument("--single-cls", action="store_true",
+                   help="Entrainer en détection mono-classe (toutes les boîtes → classe 0). "
+                        "Requis pour 'combined' (annoté uniquement en classe unknown).")
     p.add_argument("--imgsz",    type=int, default=1280,
                    help="Résolution entrainement. 1280 recommandé pour longue distance (defaut), "
                         "640 si VRAM insuffisante")
@@ -113,6 +119,8 @@ def main():
         run_name  = f"yolo_sea{args.gen}_{args.dataset}_{args.scale}_i{args.imgsz}"
         if args.nwd:
             run_name += "_nwd"
+        if args.single_cls:
+            run_name += "_1cls"
 
     epochs = args.epochs if args.epochs is not None else (20 if args.quick else 300)
 
@@ -134,6 +142,7 @@ def main():
     print(f"imgsz    : {args.imgsz}  batch={batch}")
     print(f"Epochs   : {epochs}")
     print(f"NWD      : {'ON (ratio=%.2f, C=%.1f)' % (args.nwd_ratio, args.nwd_c) if args.nwd else 'off'}")
+    print(f"1-class  : {'ON (toutes les boîtes → classe 0)' if args.single_cls else 'off'}")
     print(f"Device   : {device}")
     print(f"Run      : {run_name}")
     print(f"{'='*60}\n")
@@ -155,6 +164,7 @@ def main():
         epochs=epochs,
         imgsz=args.imgsz,
         batch=batch,
+        single_cls=args.single_cls,
 
         # ── Optimizer ────────────────────────────────────────────────
         optimizer="SGD",
