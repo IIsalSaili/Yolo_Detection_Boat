@@ -22,7 +22,7 @@ WORKDIR="$HOME/yolo_sea_homemade"
 : "${R2_ACCESS_KEY:?Renseigne R2_ACCESS_KEY}"
 : "${R2_SECRET_KEY:?Renseigne R2_SECRET_KEY}"
 : "${R2_BUCKET:?Renseigne R2_BUCKET}"
-R2_DATASET_PATH="${R2_DATASET_PATH:-datasets/combined}"
+R2_DATASET_PATH="${R2_DATASET_PATH:-combined}"
 
 # ── 1. Code ──────────────────────────────────────────────────────────────
 if [ ! -d "$WORKDIR/.git" ]; then
