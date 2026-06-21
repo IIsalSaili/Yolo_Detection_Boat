@@ -22,7 +22,7 @@
 
 Légende : ⏳ à faire / 🔧 en cours / ✅ fait
 
-**Contrainte matériel** : RTX 4060 Ti 8 Go → max `yolov8s`, batch=8 à imgsz=1280.
+**Contrainte matériel** : RTX 4060 Ti 8 Go → max `yolo26s`, batch=6 à imgsz=1280.
 
 ---
 
@@ -41,8 +41,8 @@ Légende : ⏳ à faire / 🔧 en cours / ✅ fait
 - Neck bidirectionnel (top-down + bottom-up), skip P4
 
 ### Config modèle
-- `cfg/models/v8/yolov8-sea.yaml` : backbone + SESA (idx 9, avant SPPF) + BiFPN P3/P4/P5
-- Params scale n (nc=6) ≈ 2,09M. Forward 640² → `(1,84,8400)` OK.
+- `cfg/models/26/yolo26-sea.yaml` : backbone + SESA (idx 9, avant SPPF) + BiFPN P2-P5
+- Params scale n (nc=80) ≈ 1,94M. Forward 640² → `(1, 300, 6)` directement.
 
 ### Soft-NMS
 - `ultralytics/utils/nms.py` : flags `USE_SOFT_NMS` / `SOFT_NMS_SIGMA` / `SOFT_NMS_METHOD`
@@ -69,7 +69,7 @@ python yolo_sea/train_sea.py                        # surveillance, 300 epochs, 
 python yolo_sea/train_sea.py --dataset 6classfinal
 python yolo_sea/train_sea.py --imgsz 640
 python yolo_sea/train_sea.py --quick                # 20 epochs test
-python yolo_sea/train_sea.py --baseline             # YOLOv8n baseline
+python yolo_sea/train_sea.py --baseline             # yolo26n baseline
 python yolo_sea/train_sea.py --scale s
 python yolo_sea/train_sea.py --resume <last.pt>
 ```
@@ -80,7 +80,7 @@ Hyperparamètres clés (optimisés longue distance) :
 - `box=10.0, cls=0.3` — priorité localisation sur classification
 - `copy_paste=0.3, scale=0.9` — augmentation petites cibles
 - `cos_lr=True, warmup_epochs=5`
-- Partial COCO pretrain : `model.load("yolov8n.pt")` (backbone Conv/C2f layers 0–8)
+- Partial COCO pretrain : `model.load("yolo26n.pt")` (backbone Conv/C3k2 layers 0–8)
 
 ### Script détection : `yolo_sea/detect_sea.py`
 ```
@@ -181,14 +181,14 @@ Le modèle sera multi-tâche avec têtes activées progressivement selon la dist
 ## Phase 6 — Migration YOLO26-SEA (✅)
 
 > Issue de l'étude d'architecture `yolo_sea/reports/recherche_architecture.md` (état de l'art 2024–2026).
-> Le modèle par défaut du projet est désormais **YOLO26-SEA** ; l'architecture v8 reste disponible (`--gen v8`).
+> Le projet utilise désormais uniquement **YOLO26-SEA** (YOLOv8-SEA a été retiré).
 
 ### Architecture — `cfg/models/26/yolo26-sea.yaml`
-- **Backbone YOLO26** (C3k2 / SPPF / C2PSA) + **SESA** (idx 9, avant SPPF — inchangé vs v8-sea)
+- **Backbone YOLO26** (C3k2 / SPPF / C2PSA) + **SESA** (idx 9, avant SPPF)
 - **Neck BiFPN P2–P5** : niveau **P2/4 ajouté** pour les très petites cibles (navires lointains),
   fusion pondérée `BiFPNAdd2/3`, skips sur les niveaux intermédiaires P3/P4. Largeur commune 256.
 - **Tête Detect end-to-end (NMS-free)** + `reg_max=1` (pas de DFL) → export ONNX/TensorRT et
-  quantification INT8 simplifiés. Soft-NMS sans objet sur cette génération (reste utile pour v8).
+  quantification INT8 simplifiés.
 - Params : **n = 1,94M** (nc=80) / 1,86M (nc=7) — **s = 7,45M**. Strides `[4, 8, 16, 32]`.
   Forward 640² → `(1, 300, 6)` directement (pas de post-traitement).
 - Sélection du scale par nom de fichier : `yolo26s-sea.yaml` → charge `yolo26-sea.yaml` en scale `s`.
@@ -202,8 +202,7 @@ Le modèle sera multi-tâche avec têtes activées progressivement selon la dist
   (assignation + loss), l'inférence est inchangée. Activation : `python yolo_sea/train_sea.py --nwd`.
 
 ### Scripts
-- `yolo_sea/train_sea.py` : `--gen {26,v8}` (défaut **26**), `--nwd` / `--nwd-ratio` / `--nwd-c`,
-  batch auto 6 à imgsz=1280 pour gen 26 (la tête P2 quadruple les anchors du niveau fin).
+- `yolo_sea/train_sea.py` : `--nwd` / `--nwd-ratio` / `--nwd-c`, batch auto 6 à imgsz=1280 (la tête P2 quadruple les anchors du niveau fin).
   **Correction** : `--scale s` construisait en réalité l'échelle `n` sur le yaml sea (le scale
   n'était pas transmis) — corrigé en injectant le scale dans le nom du yaml.
 - `yolo_sea/detect_sea.py` : `--soft-nms` détecté comme sans effet sur un modèle end2end (message explicite).
@@ -215,7 +214,7 @@ Le modèle sera multi-tâche avec têtes activées progressivement selon la dist
   `yolo_sea/train_sea.py` utilise des chemins absolus donc non affecté ; éviter les `project=` relatifs.
 
 ### Prochaines étapes issues de la recherche (voir `yolo_sea/reports/recherche_architecture.md`)
-1. Comparaison A/B : `--gen 26` vs `--gen v8`, avec/sans `--nwd`, sur surveillance_marine.
+1. Comparaison de l'effet de NWD : avec/sans `--nwd`, sur surveillance_marine.
 2. Tête classification hiérarchique conditionnelle (civil/militaire → type OTAN) avec abstention.
 3. Tête keypoints (proue/poupe → cap) + gating par taille de boîte (cf. Phase 5).
 4. QAT INT8 sur le checkpoint final ; pistes recherche : prior horizon, module temporel.

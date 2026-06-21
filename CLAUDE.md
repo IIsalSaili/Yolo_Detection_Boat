@@ -2,7 +2,7 @@
 
 ## Contexte du projet
 
-Implémentation d'un modèle de détection de navires à **longue distance** basé sur **YOLOv8** (repo Ultralytics), en s'inspirant des modifications décrites dans le papier **YOLO-SEA** (*Entropy* 2025, 27, 667 — Deng et al., Shanghai Maritime University / CAS).
+Implémentation d'un modèle de détection de navires à **longue distance** basé sur **YOLO26-SEA** (repo Ultralytics). Le projet a migré de l'architecture YOLOv8 vers **YOLO26-SEA** pour bénéficier d'une structure end-to-end NMS-free avec tête P2 (stride 4) pour les très petites cibles, en s'inspirant des modifications décrites dans le papier **YOLO-SEA** (*Entropy* 2025, 27, 667 — Deng et al., Shanghai Maritime University / CAS).
 
 L'objectif est d'améliorer la détection de **petites cibles maritimes** (navires lointains, faible résolution apparente) et d'estimer leur **direction / orientation de déplacement**, dans des conditions potentiellement adverses (brouillard, contre-jour, faible luminosité).
 
@@ -217,8 +217,8 @@ F(x) = x ** γ                      # γ ∈ {1.5, 2.0, 3.0}
 - `ultralytics/nn/modules/__init__.py` — déclarer SESA, BiFPN
 - `ultralytics/nn/modules/block.py` — implémenter BiFPN
 - `ultralytics/nn/modules/attention.py` (à créer) — SENetV2 + SimAM + SESA
-- `ultralytics/utils/ops.py` — remplacer NMS par Soft-NMS
-- `ultralytics/cfg/models/v8/yolov8-sea.yaml` — config du modèle custom
+- `ultralytics/utils/ops.py` — remplacer NMS par Soft-NMS (optionnel pour modèles non end2end)
+- `ultralytics/cfg/models/26/yolo26-sea.yaml` — config du modèle YOLO26-SEA
 
 ---
 
@@ -249,6 +249,6 @@ Ordre impératif : dataset stable avant toute modification → SESA avant BiFPN 
 - **SESA :** tester SENetV2 et SimAM comme modules indépendants avant fusion. Vérifier que SimAM n'introduit aucun paramètre.
 - **BiFPN :** les connexions skip entre input/output du même niveau sont la partie la plus délicate à câbler correctement dans Ultralytics. Vérifier que P3/P4 reçoivent bien les feature maps intermédiaires du backbone, pas seulement la sortie finale.
 - **Soft-NMS :** peut être appliqué sans réentraînement sur n'importe quel checkpoint — tester en premier sur le baseline pour mesurer le gain en isolation.
-- **yaml custom :** nommer le fichier de config `yolov8-sea.yaml` (ou similaire) pour éviter d'écraser les configs Ultralytics par défaut.
+- **yaml custom :** nommer le fichier de config `yolo26-sea.yaml` (ou similaire) pour éviter d'écraser les configs Ultralytics par défaut.
 - **Petites cibles :** pour ce projet (navires lointains), les niveaux P3/P4 du BiFPN sont critiques. Si les performances sur petites cibles restent insuffisantes, envisager d'ajouter une couche de détection supplémentaire à plus haute résolution.
 - **Généralisation :** tester sur un second dataset public (ex. 6_class_final sur Roboflow) pour valider que le modèle ne sur-apprend pas le dataset principal.

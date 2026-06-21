@@ -1,19 +1,16 @@
 """
-Script d'entrainement YOLO-SEA optimisé pour la détection longue distance.
+Script d'entrainement YOLO26-SEA optimisé pour la détection longue distance.
 
-Deux générations de modèle :
-    --gen 26 (défaut) : YOLO26-SEA — end-to-end NMS-free, SESA + BiFPN P2-P5 (petites cibles)
-    --gen v8          : YOLOv8-SEA — SESA + BiFPN P3-P5 (architecture du papier Entropy 2025)
+Architecture YOLO26-SEA : end-to-end NMS-free, SESA + BiFPN P2-P5 (petites cibles)
 
 Usage :
     python train_sea.py                          # YOLO26-SEA, surveillance_marine, 300 epochs, imgsz=1280
     python train_sea.py --nwd                    # + blend NWD dans la loss/assigner (petites cibles)
-    python train_sea.py --gen v8                 # architecture YOLOv8-SEA originale
     python train_sea.py --dataset fpp1           # dataset 21 classes (taxonomie projet complète)
     python train_sea.py --dataset 6classfinal    # dataset original 6 classes
     python train_sea.py --imgsz 640              # résolution réduite (plus rapide, moins précis)
     python train_sea.py --quick                  # test rapide 20 epochs
-    python train_sea.py --baseline               # baseline (yolo26n ou yolov8n selon --gen)
+    python train_sea.py --baseline               # baseline (yolo26n)
     python train_sea.py --scale s                # scale 's'
     python train_sea.py --resume runs/sea/yolo_sea26_surveillance_n/weights/last.pt --nwd
                                                  # (re-passer --nwd au resume : flag non persisté)
@@ -28,33 +25,22 @@ ROOT = Path(__file__).resolve().parents[1]
 DATASETS = {
     "surveillance": ROOT / "surveillance_marine" / "data.yaml",
     "6classfinal":  ROOT / "6classfinal" / "data.yaml",
-    "fpp1":         ROOT / "fpp1" / "data.yaml",   # LabelDeZero, 21 classes (10 mil OTAN + 11 civ)
-    # combined : fpp1 (jeu vidéo) + ship.v7 (réel), ~54k images. Toutes les boîtes sont
-    # annotées en classe 20 (unknown) → s'entraîne en détection mono-classe avec --single-cls.
+    "fpp1":         ROOT / "fpp1" / "data.yaml",
     "combined":     ROOT / "datasets" / "combined" / "data.yaml",
 }
 
 # Le scale est inséré dans le nom du yaml (ex. yolo26s-sea.yaml) : Ultralytics retire la lettre
 # pour trouver le fichier de base (yolo26-sea.yaml) et applique les multiplicateurs du scale.
-SEA_YAML = {
-    "26": ROOT / "ultralytics" / "cfg" / "models" / "26" / "yolo26{scale}-sea.yaml",
-    "v8": ROOT / "ultralytics" / "cfg" / "models" / "v8" / "yolov8{scale}-sea.yaml",
-}
-SEA_YAML_BASE = {
-    "26": ROOT / "ultralytics" / "cfg" / "models" / "26" / "yolo26-sea.yaml",
-    "v8": ROOT / "ultralytics" / "cfg" / "models" / "v8" / "yolov8-sea.yaml",
-}
-BASELINE_YAML = {"26": "yolo26{scale}.yaml", "v8": "yolov8{scale}.yaml"}
+SEA_YAML = ROOT / "ultralytics" / "cfg" / "models" / "26" / "yolo26{scale}-sea.yaml"
+SEA_YAML_BASE = ROOT / "ultralytics" / "cfg" / "models" / "26" / "yolo26-sea.yaml"
+BASELINE_YAML = "yolo26{scale}.yaml"
 
 # Poids COCO pretrain pour initialiser le backbone (chargement partiel compatible)
-PRETRAIN_PT = {"26": "yolo26{scale}.pt", "v8": "yolov8{scale}.pt"}
+PRETRAIN_PT = "yolo26{scale}.pt"
 
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--gen", choices=["26", "v8"], default="26",
-                   help="Génération du modèle : 26 = YOLO26-SEA NMS-free P2-P5 (défaut), "
-                        "v8 = YOLOv8-SEA du papier")
     p.add_argument("--dataset", choices=["surveillance", "6classfinal", "fpp1", "combined"],
                    default="surveillance")
     p.add_argument("--single-cls", action="store_true",
@@ -65,8 +51,7 @@ def parse_args():
                         "(hauteur largeur, ex. 480 640 pour une cam 480x640). 1280 recommandé "
                         "pour longue distance (défaut), 640 si VRAM insuffisante")
     p.add_argument("--batch",    type=int, default=None,
-                   help="Batch size (auto : gen 26 → 6 à 1280 [tête P2 plus lourde], "
-                        "gen v8 → 8 à 1280 ; 16 à 640)")
+                   help="Batch size (auto : 6 à 1280 [tête P2 plus lourde] ; 16 à 640)")
     p.add_argument("--quick",    action="store_true", help="20 epochs pour tester le pipeline")
     p.add_argument("--baseline", action="store_true")
     p.add_argument("--scale",    choices=["n", "s"], default="n")
@@ -100,8 +85,8 @@ def main():
     data_yaml = DATASETS[args.dataset]
     if not data_yaml.exists():
         raise FileNotFoundError(f"data.yaml introuvable : {data_yaml}")
-    if not args.baseline and not SEA_YAML_BASE[args.gen].exists():
-        raise FileNotFoundError(f"Config sea introuvable : {SEA_YAML_BASE[args.gen]}")
+    if not args.baseline and not SEA_YAML_BASE.exists():
+        raise FileNotFoundError(f"Config sea introuvable : {SEA_YAML_BASE}")
 
     # imgsz : une valeur (côté carré, int) ou deux (hauteur largeur, liste [h, w]).
     # Ultralytics accepte les deux ; on garde un int quand c'est carré.
@@ -109,21 +94,21 @@ def main():
     imgsz_max = max(args.imgsz)              # plus grand côté → dimensionne batch & nom du run
     imgsz_tag = f"{imgsz}" if isinstance(imgsz, int) else f"{args.imgsz[0]}x{args.imgsz[1]}"
 
-    # Batch auto selon résolution et génération (RTX 4060 Ti 8 Go).
+    # Batch auto selon résolution (RTX 4060 Ti 8 Go).
     # La tête P2 du YOLO26-SEA quadruple les anchors du niveau le plus fin → plus de VRAM.
     if args.batch is not None:
         batch = args.batch
     elif imgsz_max >= 1280:
-        batch = 6 if args.gen == "26" else 8
+        batch = 6
     else:
         batch = 16
 
     if args.baseline:
-        model_cfg = BASELINE_YAML[args.gen].format(scale=args.scale)
-        run_name  = f"baseline_{'yolo26' if args.gen == '26' else 'yolov8'}{args.scale}_{args.dataset}"
+        model_cfg = BASELINE_YAML.format(scale=args.scale)
+        run_name  = f"baseline_yolo26{args.scale}_{args.dataset}"
     else:
-        model_cfg = str(SEA_YAML[args.gen]).format(scale=args.scale)
-        run_name  = f"yolo_sea{args.gen}_{args.dataset}_{args.scale}_i{imgsz_tag}"
+        model_cfg = str(SEA_YAML).format(scale=args.scale)
+        run_name  = f"yolo_sea26_{args.dataset}_{args.scale}_i{imgsz_tag}"
         if args.nwd:
             run_name += "_nwd"
         if args.single_cls:
@@ -162,7 +147,7 @@ def main():
         # qui correspondent par nom et par forme sont copiées — backbone layers 0-8).
         # SESA, BiFPN et la tête restent aléatoires.
         if not args.baseline and not args.no_pretrain:
-            pretrain = PRETRAIN_PT[args.gen].format(scale=args.scale)
+            pretrain = PRETRAIN_PT.format(scale=args.scale)
             print(f"Chargement backbone COCO ({pretrain}) …")
             model.load(pretrain)
 

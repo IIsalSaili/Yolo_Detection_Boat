@@ -1,6 +1,6 @@
 # Cahier des charges — Serveur d'entraînement YOLO-SEA
 
-> Projet : détection de navires à longue distance (YOLO26-SEA / YOLOv8-SEA, base Ultralytics 8.4.60).
+> Projet : détection de navires à longue distance (YOLO26-SEA, base Ultralytics 8.4.60).
 > Objet : spécifier la machine et l'environnement logiciel d'un **serveur dédié à l'entraînement** du modèle.
 > Version : 1.0 — 12/06/2026
 
@@ -12,8 +12,8 @@ Le modèle est aujourd'hui développé sur un poste **CPU-only** (torch `2.8.0+c
 ce qui rend l'entraînement réel impraticable (imgsz=1280, 300 epochs). Ce document définit les
 besoins d'un serveur GPU permettant :
 
-- l'entraînement complet (300 epochs) des variantes `yolo26{n,s}-sea` et `yolov8{n,s}-sea` ;
-- l'expérimentation A/B (gen 26 vs v8, avec/sans NWD) sur les datasets du projet ;
+- l'entraînement complet (300 epochs) des variantes `yolo26{n,s}-sea` ;
+- l'expérimentation (avec/sans NWD) sur les datasets du projet ;
 - la marge pour les évolutions prévues (têtes multi-tâches, datasets externes volumineux type WUTDet 100k images).
 
 **Le poste — son installation OS et logicielle — fait partie intégrante de la prestation.**
@@ -26,8 +26,8 @@ besoins d'un serveur GPU permettant :
 |-----------|---------------|
 | Framework | PyTorch + Ultralytics 8.4.60 |
 | Résolution d'entrée | **1280×1280** (gain principal sur petites cibles ; 640 en repli) |
-| Modèles | yolo26n/s-sea, yolov8n/s-sea (max **scale `s`** — contrainte projet) |
-| Batch (réf. 8 Go) | 6 (gen 26) / 8 (gen v8) à 1280 ; 16 à 640 |
+| Modèles | yolo26n/s-sea (max **scale `s`** — contrainte projet) |
+| Batch (réf. 8 Go) | 6 à 1280 ; 16 à 640 |
 | Epochs | 300 (20 en mode `--quick`) |
 | Optimizer | SGD, lr0=0.01, cosine, warmup 5 |
 | Augmentations | mosaic, copy_paste=0.3, scale=0.9, HSV, rotation — **gourmandes en CPU** |
