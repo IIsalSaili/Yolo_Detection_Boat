@@ -216,3 +216,7 @@ results.csv
 *.pt
 *.zip
 tkt.txt
+
+# YOLO-SEA Reorganized Folders
+/yolo_sea/weights/
+/yolo_sea/config/tkt.txt

@@ -60,18 +60,18 @@ Légende : ⏳ à faire / 🔧 en cours / ✅ fait
 | `surveillance_marine/` | 919 train / 254 val / 163 test | 7 (boat, buoy, kayak, sail-boat, speed-boat, vessel, war-ship) | Roboflow — marine-surveillance v9 |
 | `6classfinal/` | ~1 934 | 6 (a, buoy, container, cruise, fish-b, warship) | Roboflow — 6_class_final v1 |
 
-> `fpp1` est le dataset le plus riche (taxonomie projet complète) → câblé dans `train_sea.py`
+> `fpp1` est le dataset le plus riche (taxonomie projet complète) → câblé dans `yolo_sea/train_sea.py`
 > (`--dataset fpp1`). `data.yaml` sans clé `path:` (résolution sur le dossier du yaml, CWD-indépendant).
 
-### Script d'entraînement : `train_sea.py`
+### Script d'entraînement : `yolo_sea/train_sea.py`
 ```
-python train_sea.py                        # surveillance, 300 epochs, imgsz=1280
-python train_sea.py --dataset 6classfinal
-python train_sea.py --imgsz 640
-python train_sea.py --quick                # 20 epochs test
-python train_sea.py --baseline             # YOLOv8n baseline
-python train_sea.py --scale s
-python train_sea.py --resume <last.pt>
+python yolo_sea/train_sea.py                        # surveillance, 300 epochs, imgsz=1280
+python yolo_sea/train_sea.py --dataset 6classfinal
+python yolo_sea/train_sea.py --imgsz 640
+python yolo_sea/train_sea.py --quick                # 20 epochs test
+python yolo_sea/train_sea.py --baseline             # YOLOv8n baseline
+python yolo_sea/train_sea.py --scale s
+python yolo_sea/train_sea.py --resume <last.pt>
 ```
 
 Hyperparamètres clés (optimisés longue distance) :
@@ -82,12 +82,12 @@ Hyperparamètres clés (optimisés longue distance) :
 - `cos_lr=True, warmup_epochs=5`
 - Partial COCO pretrain : `model.load("yolov8n.pt")` (backbone Conv/C2f layers 0–8)
 
-### Script détection : `detect_sea.py`
+### Script détection : `yolo_sea/detect_sea.py`
 ```
-python detect_sea.py image.jpg
-python detect_sea.py 0                     # webcam
-python detect_sea.py video.mp4 --save out.mp4
-python detect_sea.py image.jpg --soft-nms
+python yolo_sea/detect_sea.py image.jpg
+python yolo_sea/detect_sea.py 0                     # webcam
+python yolo_sea/detect_sea.py video.mp4 --save out.mp4
+python yolo_sea/detect_sea.py image.jpg --soft-nms
 ```
 Supporte les deux datasets avec couleurs par classe. Poids par défaut configurables dans `DATASET_CFG`.
 
@@ -180,7 +180,7 @@ Le modèle sera multi-tâche avec têtes activées progressivement selon la dist
 
 ## Phase 6 — Migration YOLO26-SEA (✅)
 
-> Issue de l'étude d'architecture `recherche_architecture.md` (état de l'art 2024–2026).
+> Issue de l'étude d'architecture `yolo_sea/reports/recherche_architecture.md` (état de l'art 2024–2026).
 > Le modèle par défaut du projet est désormais **YOLO26-SEA** ; l'architecture v8 reste disponible (`--gen v8`).
 
 ### Architecture — `cfg/models/26/yolo26-sea.yaml`
@@ -199,22 +199,22 @@ Le modèle sera multi-tâche avec têtes activées progressivement selon la dist
 - Branchée comme **blend CIoU/NWD** dans `BboxLoss` (`utils/loss.py`, rescale grille→pixels par
   stride) **et** dans `TaskAlignedAssigner.iou_calculation` (`utils/tal.py`, déjà en pixels).
 - Off par défaut → zéro impact sur les modèles stock. Effet **entraînement uniquement**
-  (assignation + loss), l'inférence est inchangée. Activation : `python train_sea.py --nwd`.
+  (assignation + loss), l'inférence est inchangée. Activation : `python yolo_sea/train_sea.py --nwd`.
 
 ### Scripts
-- `train_sea.py` : `--gen {26,v8}` (défaut **26**), `--nwd` / `--nwd-ratio` / `--nwd-c`,
+- `yolo_sea/train_sea.py` : `--gen {26,v8}` (défaut **26**), `--nwd` / `--nwd-ratio` / `--nwd-c`,
   batch auto 6 à imgsz=1280 pour gen 26 (la tête P2 quadruple les anchors du niveau fin).
   **Correction** : `--scale s` construisait en réalité l'échelle `n` sur le yaml sea (le scale
   n'était pas transmis) — corrigé en injectant le scale dans le nom du yaml.
-- `detect_sea.py` : `--soft-nms` détecté comme sans effet sur un modèle end2end (message explicite).
+- `yolo_sea/detect_sea.py` : `--soft-nms` détecté comme sans effet sur un modèle end2end (message explicite).
 
 ### Validation (smoke test)
 - Build n/s OK, forward OK, 1 epoch d'entraînement complète avec NWD ON (loss/assigner/val/save OK).
 - Dépendance ajoutée : `polars` (requis par le trainer 8.4.x pour lire results.csv).
 - ⚠️ Settings Ultralytics globaux : `runs_dir` pointe vers `Desktop\modif_yolo` (ancien projet).
-  `train_sea.py` utilise des chemins absolus donc non affecté ; éviter les `project=` relatifs.
+  `yolo_sea/train_sea.py` utilise des chemins absolus donc non affecté ; éviter les `project=` relatifs.
 
-### Prochaines étapes issues de la recherche (voir `recherche_architecture.md`)
+### Prochaines étapes issues de la recherche (voir `yolo_sea/reports/recherche_architecture.md`)
 1. Comparaison A/B : `--gen 26` vs `--gen v8`, avec/sans `--nwd`, sur surveillance_marine.
 2. Tête classification hiérarchique conditionnelle (civil/militaire → type OTAN) avec abstention.
 3. Tête keypoints (proue/poupe → cap) + gating par taille de boîte (cf. Phase 5).
@@ -238,5 +238,5 @@ Le modèle sera multi-tâche avec têtes activées progressivement selon la dist
 ## Reprise rapide (si crash)
 1. Lire ce fichier + `CLAUDE.md`
 2. Vérifier le statut de chaque phase
-3. Pour relancer l'entraînement : `python train_sea.py --resume runs/sea/.../last.pt`
+3. Pour relancer l'entraînement : `python yolo_sea/train_sea.py --resume runs/sea/.../last.pt`
 4. Pour l'annotation : ouvrir Label Studio, importer le template XML

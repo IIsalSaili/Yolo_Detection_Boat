@@ -68,5 +68,5 @@ fi
 # L40S = 48 Go VRAM → on monte le batch (le script défaut à 6 pour une 4060 Ti 8 Go).
 # imgsz=1280, YOLO26-SEA, mono-classe (dataset combined annoté en classe unknown).
 echo "Lancement du train …"
-python train_sea.py --dataset combined --single-cls --batch 24 --device 0 2>&1 \
+python yolo_sea/train_sea.py --dataset combined --single-cls --batch 24 --device 0 2>&1 \
   | tee "$WORKDIR/train_combined.log"
