@@ -60,9 +60,10 @@ def parse_args():
     p.add_argument("--single-cls", action="store_true",
                    help="Entrainer en détection mono-classe (toutes les boîtes → classe 0). "
                         "Requis pour 'combined' (annoté uniquement en classe unknown).")
-    p.add_argument("--imgsz",    type=int, default=1280,
-                   help="Résolution entrainement. 1280 recommandé pour longue distance (defaut), "
-                        "640 si VRAM insuffisante")
+    p.add_argument("--imgsz",    type=int, nargs="+", default=[1280],
+                   help="Résolution entrainement. Un entier (côté carré, ex. 640) ou deux "
+                        "(hauteur largeur, ex. 480 640 pour une cam 480x640). 1280 recommandé "
+                        "pour longue distance (défaut), 640 si VRAM insuffisante")
     p.add_argument("--batch",    type=int, default=None,
                    help="Batch size (auto : gen 26 → 6 à 1280 [tête P2 plus lourde], "
                         "gen v8 → 8 à 1280 ; 16 à 640)")
@@ -102,11 +103,17 @@ def main():
     if not args.baseline and not SEA_YAML_BASE[args.gen].exists():
         raise FileNotFoundError(f"Config sea introuvable : {SEA_YAML_BASE[args.gen]}")
 
+    # imgsz : une valeur (côté carré, int) ou deux (hauteur largeur, liste [h, w]).
+    # Ultralytics accepte les deux ; on garde un int quand c'est carré.
+    imgsz = args.imgsz[0] if len(args.imgsz) == 1 else args.imgsz
+    imgsz_max = max(args.imgsz)              # plus grand côté → dimensionne batch & nom du run
+    imgsz_tag = f"{imgsz}" if isinstance(imgsz, int) else f"{args.imgsz[0]}x{args.imgsz[1]}"
+
     # Batch auto selon résolution et génération (RTX 4060 Ti 8 Go).
     # La tête P2 du YOLO26-SEA quadruple les anchors du niveau le plus fin → plus de VRAM.
     if args.batch is not None:
         batch = args.batch
-    elif args.imgsz >= 1280:
+    elif imgsz_max >= 1280:
         batch = 6 if args.gen == "26" else 8
     else:
         batch = 16
@@ -116,7 +123,7 @@ def main():
         run_name  = f"baseline_{'yolo26' if args.gen == '26' else 'yolov8'}{args.scale}_{args.dataset}"
     else:
         model_cfg = str(SEA_YAML[args.gen]).format(scale=args.scale)
-        run_name  = f"yolo_sea{args.gen}_{args.dataset}_{args.scale}_i{args.imgsz}"
+        run_name  = f"yolo_sea{args.gen}_{args.dataset}_{args.scale}_i{imgsz_tag}"
         if args.nwd:
             run_name += "_nwd"
         if args.single_cls:
@@ -139,7 +146,7 @@ def main():
     print(f"\n{'='*60}")
     print(f"Modele   : {model_cfg}")
     print(f"Dataset  : {data_yaml}")
-    print(f"imgsz    : {args.imgsz}  batch={batch}")
+    print(f"imgsz    : {imgsz_tag}  batch={batch}")
     print(f"Epochs   : {epochs}")
     print(f"NWD      : {'ON (ratio=%.2f, C=%.1f)' % (args.nwd_ratio, args.nwd_c) if args.nwd else 'off'}")
     print(f"1-class  : {'ON (toutes les boîtes → classe 0)' if args.single_cls else 'off'}")
@@ -162,7 +169,7 @@ def main():
     results = model.train(
         data=str(data_yaml),
         epochs=epochs,
-        imgsz=args.imgsz,
+        imgsz=imgsz,
         batch=batch,
         single_cls=args.single_cls,
 
