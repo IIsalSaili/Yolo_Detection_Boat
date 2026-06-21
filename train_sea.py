@@ -202,6 +202,15 @@ def main():
         # Désaturation légère : brouillard, brume, contre-jour.
         hsv_s=0.5,
         hsv_v=0.4,
+        # Random Erasing (masking) : efface un patch rectangulaire → robustesse
+        # à l'occlusion + anti-overfit. NB : aveugle aux bbox, donc à 0.4 il peut
+        # recouvrir entièrement une cible lointaine (quelques px) et créer un
+        # label menteur. Valeur assumée ici ; baisser à 0.1 si les petites cibles
+        # régressent.
+        erasing=0.4,
+        # MixUp léger : combinaison linéaire de 2 images+labels, en plus du mosaic
+        # → régularisation supplémentaire pour quasi rien.
+        mixup=0.1,
 
         # ── Eval / sauvegarde ─────────────────────────────────────────
         device=device,
