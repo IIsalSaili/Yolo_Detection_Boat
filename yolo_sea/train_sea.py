@@ -46,15 +46,14 @@ def parse_args():
     p.add_argument("--single-cls", action="store_true",
                    help="Entrainer en détection mono-classe (toutes les boîtes → classe 0). "
                         "Requis pour 'combined' (annoté uniquement en classe unknown).")
-    p.add_argument("--imgsz",    type=int, nargs="+", default=[1280],
+    p.add_argument("--imgsz",    type=int, nargs="+", default=[480, 640],
                    help="Résolution entrainement. Un entier (côté carré, ex. 640) ou deux "
-                        "(hauteur largeur, ex. 480 640 pour une cam 480x640). 1280 recommandé "
-                        "pour longue distance (défaut), 640 si VRAM insuffisante")
-    p.add_argument("--batch",    type=int, default=None,
-                   help="Batch size (auto : 6 à 1280 [tête P2 plus lourde] ; 16 à 640)")
+                        "(hauteur largeur, ex. 480 640 pour une cam 480x640 ; défaut [480, 640])")
+    p.add_argument("--batch",    type=int, default=512,
+                   help="Batch size (défaut : 512, optimisé pour L40S)")
     p.add_argument("--quick",    action="store_true", help="20 epochs pour tester le pipeline")
     p.add_argument("--baseline", action="store_true")
-    p.add_argument("--scale",    choices=["n", "s"], default="n")
+    p.add_argument("--scale",    choices=["n", "s"], default="s")
     p.add_argument("--epochs",   type=int, default=None)
     p.add_argument("--nwd",      action="store_true",
                    help="Blend NWD (Normalized Wasserstein Distance) dans la box loss et "
@@ -94,14 +93,15 @@ def main():
     imgsz_max = max(args.imgsz)              # plus grand côté → dimensionne batch & nom du run
     imgsz_tag = f"{imgsz}" if isinstance(imgsz, int) else f"{args.imgsz[0]}x{args.imgsz[1]}"
 
-    # Batch auto selon résolution (RTX 4060 Ti 8 Go).
-    # La tête P2 du YOLO26-SEA quadruple les anchors du niveau le plus fin → plus de VRAM.
-    if args.batch is not None:
-        batch = args.batch
-    elif imgsz_max >= 1280:
-        batch = 6
-    else:
-        batch = 16
+    device = resolve_device(args.device)
+    if str(device) == "cpu":
+        print("\n⚠️  Entrainement sur CPU : torch est un build CPU-only (ou --device cpu).")
+        print("   Pour tester rapidement : --quick.\n")
+
+    batch = args.batch
+    # Ajustement linéaire du learning rate selon la taille de lot (référence batch=64, lr0=0.01)
+    # Pour batch=512, lr0 devient 0.08.
+    lr0 = 0.01 * (batch / 64)
 
     if args.baseline:
         model_cfg = BASELINE_YAML.format(scale=args.scale)
@@ -115,11 +115,6 @@ def main():
             run_name += "_1cls"
 
     epochs = args.epochs if args.epochs is not None else (20 if args.quick else 300)
-
-    device = resolve_device(args.device)
-    if str(device) == "cpu":
-        print("\n⚠️  Entrainement sur CPU : torch est un build CPU-only (ou --device cpu).")
-        print("   À imgsz=1280/batch=6 c'est TRÈS lent. Pour tester : --quick --imgsz 640.\n")
 
     # NWD : flags globaux lus par BboxLoss (utils/loss.py) et TaskAlignedAssigner (utils/tal.py).
     if args.nwd:
@@ -160,7 +155,7 @@ def main():
 
         # ── Optimizer ────────────────────────────────────────────────
         optimizer="SGD",
-        lr0=0.01,
+        lr0=lr0,
         lrf=0.01,           # lr finale = lr0 * lrf (cosine schedule)
         momentum=0.937,
         weight_decay=0.0005,
