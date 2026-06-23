@@ -1,0 +1,4 @@
+cd yolo_sea
+python eval_compare.py
+
+python eval_compare.py --weights chemin/vers/best.pt --dataset combined --split test --imgsz 640 --batch 32 --device auto --n-speed-samples 100
