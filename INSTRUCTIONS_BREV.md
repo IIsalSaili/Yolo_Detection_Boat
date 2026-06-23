@@ -22,12 +22,23 @@ brev create yolo-sea-gpu --gpu-name A100   # ou le GPU voulu
 
 ---
 
-## 2. Récupérer le code sur l'instance
+## 2. Envoyer le code sur l'instance
+
+Le repo GitHub est **privé** : un `git clone` échouerait sur l'instance (pas
+de creds Git configurées dessus). Le Dockerfile fait `COPY . .` (il a besoin
+de tout le repo comme contexte de build, pas juste du fichier Dockerfile).
+
+⚠️ Ne pas faire `brev copy .` directement : ça enverrait aussi `.venv/`
+(5,6 Go, inutile pour le build). On empaquette d'abord uniquement les
+fichiers trackés par Git avec `git archive`, puis on envoie ce tarball :
 
 ```bash
+# depuis ta machine locale, à la racine du repo
+git archive --format=tar.gz -o /tmp/yolo_sea_homemade.tar.gz HEAD
+brev copy /tmp/yolo_sea_homemade.tar.gz yolo-sea-gpu:~/yolo_sea_homemade.tar.gz
+
 brev shell yolo-sea-gpu
-git clone --branch feat/combined-dataset-single-cls --depth 1 \
-  https://github.com/IIsalSaili/yolo_sea_homemade.git
+mkdir -p yolo_sea_homemade && tar -xzf yolo_sea_homemade.tar.gz -C yolo_sea_homemade
 cd yolo_sea_homemade
 ```
 
