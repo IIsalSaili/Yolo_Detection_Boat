@@ -1,33 +1,39 @@
-# Guide de déploiement sur une instance Brev (Docker)
+# Déploiement sur Brev (Docker)
 
-Ce fichier regroupe les commandes pour builder l'image Docker d'entraînement
-YOLO26-SEA **directement sur l'instance Brev** (GPU), puis la lancer. Pas de
-push sur un registre : le réseau d'une instance cloud est généralement bien
-plus rapide que celui d'une connexion résidentielle, donc on évite le double
-goulot téléchargement (image de base ~4,3 Go) + upload (image finale ~5 Go)
-depuis chez soi.
+4 étapes : **créer l'instance → récupérer le code → builder l'image → lancer
+le container avec les creds R2**.
 
-L'image embarque le code du repo (modifications SESA/BiFPN/NWD/YOLO26-SEA) et
-toutes les libs nécessaires. Le dataset `combined` est pull depuis R2
-(Cloudflare, compatible S3) au démarrage du container, via `rclone`.
+L'image contient le code (SESA/BiFPN/NWD/YOLO26-SEA) et les libs. Le dataset
+`combined` n'est PAS dans l'image — il est téléchargé depuis R2 (Cloudflare,
+compatible S3) au démarrage du container, via `rclone`, à condition de passer
+les bonnes variables d'environnement au `docker run` (étape 4).
 
 ---
 
-## 1. Sur l'instance Brev : récupérer le code
+## 1. Créer l'instance Brev
 
-Connectez-vous à l'instance (`brev shell NOM_INSTANCE` ou terminal distant) :
+Choisir le mode **"VM"** (pas "Single Container") — le mode container n'a pas
+de champ pour les variables d'environnement, donc pas de moyen propre de
+passer les creds R2 sans les écrire en clair dans l'UI web.
 
 ```bash
+brev create yolo-sea-gpu --gpu-name A100   # ou le GPU voulu
+```
+
+---
+
+## 2. Récupérer le code sur l'instance
+
+```bash
+brev shell yolo-sea-gpu
 git clone --branch feat/combined-dataset-single-cls --depth 1 \
   https://github.com/IIsalSaili/yolo_sea_homemade.git
 cd yolo_sea_homemade
 ```
 
-(Si le repo est déjà cloné : `git fetch origin feat/combined-dataset-single-cls && git checkout feat/combined-dataset-single-cls && git pull`.)
-
 ---
 
-## 2. Build de l'image (sur l'instance)
+## 3. Builder l'image Docker
 
 ```bash
 docker build -f docker/Dockerfile-sea-train -t yolo-sea-train .
@@ -35,10 +41,11 @@ docker build -f docker/Dockerfile-sea-train -t yolo-sea-train .
 
 ---
 
-## 3. Lancer le container
+## 4. Lancer le container — passer les creds R2 en argument
 
-Les creds R2 sont passés en variables d'env au `docker run` — jamais
-commités ni baked dans l'image :
+**Sans ces 4 variables, le dataset n'est pas téléchargé** (le script affiche
+juste un avertissement et ouvre un bash vide). Elles se passent en `-e` au
+`docker run`, jamais dans le Dockerfile :
 
 ```bash
 docker run --gpus all -it \
@@ -46,15 +53,14 @@ docker run --gpus all -it \
   -e R2_ACCESS_KEY=... \
   -e R2_SECRET_KEY=... \
   -e R2_BUCKET=... \
-  -e R2_DATASET_PATH=combined \
   yolo-sea-train
 ```
 
-L'entrypoint (`yolo_sea/scripts/docker_entrypoint.sh`) pull le dataset
-`combined` depuis R2 dans `/workspace/datasets/combined`, puis ouvre un bash
-interactif (aucune commande de train n'est lancée automatiquement).
+Ça pull le dataset dans `/workspace/datasets/combined` puis ouvre un bash
+interactif.
 
-Pour enchaîner directement sur l'entraînement, ajouter la commande à la fin :
+Pour lancer directement l'entraînement (sans passer par le bash interactif),
+ajouter la commande à la fin :
 
 ```bash
 docker run --gpus all \
@@ -64,21 +70,5 @@ docker run --gpus all \
   python yolo_sea/train_sea.py --dataset combined --single-cls --scale s --device 0
 ```
 
-Penser à monter `runs/` en volume (`-v`) si les poids/checkpoints doivent
-survivre à la suppression du container.
-
----
-
-## Alternative : build local + push registre
-
-Si l'instance Brev n'a pas accès à `git clone` (réseau restreint) ou si vous
-préférez réutiliser la même image sur plusieurs instances sans rebuild :
-
-```bash
-docker build -f docker/Dockerfile-sea-train -t yolo-sea-train .
-docker tag yolo-sea-train <registre>/<user>/yolo-sea-train:latest
-docker push <registre>/<user>/yolo-sea-train:latest
-# puis sur l'instance Brev :
-docker run --gpus all -it -e R2_ENDPOINT=... -e R2_ACCESS_KEY=... -e R2_SECRET_KEY=... -e R2_BUCKET=... \
-  <registre>/<user>/yolo-sea-train:latest
-```
+Le `-v "$PWD/runs:..."` est important : sans ça, les checkpoints/poids
+disparaissent avec le container à la fin du run.
