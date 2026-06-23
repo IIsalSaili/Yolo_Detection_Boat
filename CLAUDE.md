@@ -2,7 +2,7 @@
 
 ## Contexte du projet
 
-Implémentation d'un modèle de détection de navires à **longue distance** basé sur **YOLO26-SEA** (repo Ultralytics). Le projet a migré de l'architecture YOLOv8 vers **YOLO26-SEA** pour bénéficier d'une structure end-to-end NMS-free avec tête P2 (stride 4) pour les très petites cibles, en s'inspirant des modifications décrites dans le papier **YOLO-SEA** (*Entropy* 2025, 27, 667 — Deng et al., Shanghai Maritime University / CAS).
+Implémentation d'un modèle de détection de navires à **longue distance** basé sur **YOLO26-SEA** (repo Ultralytics), avec une structure end-to-end NMS-free et une tête P2 (stride 4) pour les très petites cibles, en s'inspirant des modifications décrites dans le papier **YOLO-SEA** (*Entropy* 2025, 27, 667 — Deng et al., Shanghai Maritime University / CAS).
 
 L'objectif est d'améliorer la détection de **petites cibles maritimes** (navires lointains, faible résolution apparente) et d'estimer leur **direction / orientation de déplacement**, dans des conditions potentiellement adverses (brouillard, contre-jour, faible luminosité).
 
@@ -12,7 +12,7 @@ L'objectif est d'améliorer la détection de **petites cibles maritimes** (navir
 
 **Papier :** YOLO-SEA — An Enhanced Detection Framework for Multi-Scale Maritime Targets in Complex Sea States and Adverse Weather  
 **DOI :** https://doi.org/10.3390/e27070667  
-**Base :** YOLOv8n (version nano — 3,01M params, 8,2 GFLOPs)  
+**Base :** modèle nano (3,01M params, 8,2 GFLOPs)  
 **Résultats publiés :** mAP@0.5 = 88,2% (+5,8 pt vs baseline), mAP@0.5:0.95 = 60,8% (+7,2 pt), params réduits à 2,80M
 
 ---
@@ -183,7 +183,7 @@ F(x) = x ** γ                      # γ ∈ {1.5, 2.0, 3.0}
 
 | Config | SESA | BiFPN | Soft-NMS | mAP@0.5 | mAP@0.5:0.95 | Params (M) | FLOPs (G) |
 |--------|------|-------|----------|---------|-------------|-----------|---------|
-| Baseline YOLOv8n | — | — | — | 82,4% | 53,6% | 3,01 | 8,2 |
+| Baseline | — | — | — | 82,4% | 53,6% | 3,01 | 8,2 |
 | + SESA seul | ✓ | — | — | 84,2% | 56,8% | 3,03 | 8,2 |
 | + BiFPN seul | — | ✓ | — | 84,1% | 54,9% | 2,79 | 8,2 |
 | + Soft-NMS seul | — | — | ✓ | 85,0% | 57,6% | 3,01 | 8,9 |
@@ -194,7 +194,7 @@ F(x) = x ** γ                      # γ ∈ {1.5, 2.0, 3.0}
 
 | Modèle | P | R | mAP@0.5 | mAP@0.5:0.95 |
 |--------|---|---|---------|-------------|
-| YOLOv8n | 68,0% | 73,8% | 75,4% | 45,7% |
+| Baseline | 68,0% | 73,8% | 75,4% | 45,7% |
 | YOLO-SEA | 73,4% | 80,7% | 82,9% | 56,9% |
 
 ---
@@ -210,9 +210,9 @@ F(x) = x ** γ                      # γ ∈ {1.5, 2.0, 3.0}
 **Hyperparamètres d'entraînement (papier) :**
 - Epochs : 300
 - Optimizer : SGD, lr = 0,01, momentum = 0,01
-- Paramètres Ultralytics : défauts YOLOv8 pour le reste
+- Paramètres Ultralytics : défauts du framework pour le reste
 
-**Repo :** Ultralytics YOLOv8 — https://github.com/ultralytics/ultralytics  
+**Repo :** Ultralytics — https://github.com/ultralytics/ultralytics  
 **Fichiers clés à modifier :**
 - `ultralytics/nn/modules/__init__.py` — déclarer SESA, BiFPN
 - `ultralytics/nn/modules/block.py` — implémenter BiFPN
@@ -235,7 +235,7 @@ Tests de robustesse : évaluer sur jeu de test avec dégradations synthétiques
 
 | Phase | Contenu | Durée estimée |
 |-------|---------|--------------|
-| 1 | Dataset + baseline YOLOv8n | S1–S2 |
+| 1 | Dataset + baseline | S1–S2 |
 | 2 | Implémenter + tester SESA (backbone) | S2–S3 |
 | 3 | Implémenter + tester BiFPN (neck) | S3–S4 |
 | 4 | Brancher Soft-NMS + ablation complète + tests météo | S5–S6 |

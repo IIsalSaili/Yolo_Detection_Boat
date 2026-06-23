@@ -1,0 +1,56 @@
+# Image d'entraînement YOLO26-SEA, prête à pousser sur une instance Brev (GPU).
+#
+# Build :
+#   docker build -f docker/Dockerfile-sea-train -t yolo-sea-train .
+# Push (adapter au registre utilisé, ex. Docker Hub ou GHCR) :
+#   docker tag yolo-sea-train <registre>/<user>/yolo-sea-train:latest
+#   docker push <registre>/<user>/yolo-sea-train:latest
+# Run sur l'instance Brev (GPU, dataset combined pull depuis R2 puis shell interactif) :
+#   docker run --gpus all -it \
+#     -e R2_ENDPOINT=... -e R2_ACCESS_KEY=... -e R2_SECRET_KEY=... \
+#     -e R2_BUCKET=... -e R2_DATASET_PATH=combined \
+#     <registre>/<user>/yolo-sea-train:latest
+# Run avec lancement direct du train (aucune commande par défaut n'est baked,
+# on passe train_sea.py et ses arguments explicitement) :
+#   docker run --gpus all \
+#     -e R2_ENDPOINT=... -e R2_ACCESS_KEY=... -e R2_SECRET_KEY=... -e R2_BUCKET=... \
+#     -v "$PWD/runs:/workspace/runs" \
+#     <registre>/<user>/yolo-sea-train:latest \
+#     python yolo_sea/train_sea.py --dataset combined --single-cls --scale s --device 0
+
+FROM pytorch/pytorch:2.11.0-cuda12.8-cudnn9-runtime
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_BREAK_SYSTEM_PACKAGES=1 \
+    MKL_THREADING_LAYER=GNU \
+    OMP_NUM_THREADS=1
+
+# gcc/git : build de certaines deps Python. libgl1/libglib2.0-0/libsm6 : opencv.
+# curl : install rclone (pull dataset R2).
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    gcc git curl libgl1 libglib2.0-0 libsm6 && \
+    curl -fsSL https://rclone.org/install.sh | bash && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+
+COPY . .
+
+# Le repo contient une version modifiée d'ultralytics (SESA, BiFPN, NWD, YOLO26-SEA) :
+# install en editable pour que `import ultralytics` résolve vers ce code.
+RUN pip install -e .
+
+# Images de test d'origine, requises par check_amp() au démarrage du train (ultralytics/utils/checks.py) :
+# ultralytics/assets/ est gitignored et absent du repo, donc absent du COPY . . ci-dessus.
+RUN mkdir -p ultralytics/assets && \
+    curl -L -o ultralytics/assets/bus.jpg https://ultralytics.com/images/bus.jpg && \
+    curl -L -o ultralytics/assets/zelda.jpg https://github.com/ultralytics/assets/raw/main/zelda.jpg
+
+RUN chmod +x yolo_sea/scripts/docker_entrypoint.sh
+
+ENTRYPOINT ["yolo_sea/scripts/docker_entrypoint.sh"]
+CMD []

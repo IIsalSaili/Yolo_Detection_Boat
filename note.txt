@@ -1,0 +1,8 @@
+rclone copy sea-vis-data-fan:sea-vis-data-fan ./sea-vis-data-fan -P --transfers 32 --checkers 32
+
+rsync -avz ./ extended-copper-alpaca:~/yolo_sea_homemade/
+
+lancer l'app (yolo_sea/app.py) en local avec best.pt :
+cd yolo_sea && /home/enzobel/Documents/yolo_sea_homemade/.venv/bin/python app.py
+puis ouvrir http://127.0.0.1:7860
+(.venv local cree avec torch+cuda, gradio, ultralytics -e ; best.pt copie dans yolo_sea/weights/best.pt)

@@ -1,62 +1,84 @@
-# Guide de déploiement et configuration d'une instance Brev
+# Guide de déploiement sur une instance Brev (Docker)
 
-Ce fichier regroupe toutes les commandes nécessaires pour transférer votre code local vers une instance Brev, configurer l'environnement Python et lancer l'entraînement.
+Ce fichier regroupe les commandes pour builder l'image Docker d'entraînement
+YOLO26-SEA **directement sur l'instance Brev** (GPU), puis la lancer. Pas de
+push sur un registre : le réseau d'une instance cloud est généralement bien
+plus rapide que celui d'une connexion résidentielle, donc on évite le double
+goulot téléchargement (image de base ~4,3 Go) + upload (image finale ~5 Go)
+depuis chez soi.
 
----
-
-## 1. Depuis votre machine locale (Transfert du code)
-
-Avant de transférer, assurez-vous que votre instance est démarrée (`RUNNING` / `READY`) et rafraîchissez votre configuration SSH locale :
-```bash
-brev refresh
-```
-
-Utilisez `rsync` pour copier le dossier du projet vers l'instance Brev (remplacez `NOM_INSTANCE` par le nom de votre instance, ex. `damaged-black-elephant`) :
-```bash
-rsync -avz --progress --exclude='.venv' /home/dromsis/Documents/yolo_sea_homemade NOM_INSTANCE:/home/shadeform/
-```
+L'image embarque le code du repo (modifications SESA/BiFPN/NWD/YOLO26-SEA) et
+toutes les libs nécessaires. Le dataset `combined` est pull depuis R2
+(Cloudflare, compatible S3) au démarrage du container, via `rclone`.
 
 ---
 
-## 2. Sur l'instance Brev (Configuration de l'environnement)
+## 1. Sur l'instance Brev : récupérer le code
 
-Connectez-vous à l'instance (via `brev shell NOM_INSTANCE` ou directement depuis le terminal distant) et lancez ces commandes dans l'ordre :
+Connectez-vous à l'instance (`brev shell NOM_INSTANCE` ou terminal distant) :
 
-### Étape A : Se placer dans le dossier du projet
 ```bash
-cd ~/yolo_sea_homemade
+git clone --branch feat/combined-dataset-single-cls --depth 1 \
+  https://github.com/IIsalSaili/yolo_sea_homemade.git
+cd yolo_sea_homemade
 ```
 
-### Étape B : Activer l'environnement virtuel et installer Pip (si manquant)
-```bash
-source ~/.venv/bin/activate
-python -m ensurepip --default-pip
-```
+(Si le repo est déjà cloné : `git fetch origin feat/combined-dataset-single-cls && git checkout feat/combined-dataset-single-cls && git pull`.)
 
-### Étape C : Installer PyTorch compatible avec le pilote CUDA de l'instance
-*Note : Indispensable pour éviter le crash d'incompatibilité de driver sur les instances de type H100/L40S.*
-```bash
-python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124 --force-reinstall
-```
+---
 
-### Étape D : Installer le package Ultralytics modifié en mode éditable
-```bash
-python -m pip install -e .
-```
+## 2. Build de l'image (sur l'instance)
 
-### Étape E : Télécharger les images de test d'origine (requises par l'AMP Check)
 ```bash
-mkdir -p ultralytics/assets
-curl -L -o ultralytics/assets/bus.jpg https://ultralytics.com/images/bus.jpg
-curl -L -o ultralytics/assets/zelda.jpg https://github.com/ultralytics/assets/raw/main/zelda.jpg
+docker build -f docker/Dockerfile-sea-train -t yolo-sea-train .
 ```
 
 ---
 
-## 3. Lancer l'entraînement
+## 3. Lancer le container
 
-Une fois la configuration terminée, vous pouvez démarrer l'entraînement (assurez-vous d'avoir activé le `.venv` au préalable) :
+Les creds R2 sont passés en variables d'env au `docker run` — jamais
+commités ni baked dans l'image :
 
 ```bash
-python yolo_sea/train_sea.py --dataset combined --single-cls --batch 64 --device 0 --nwd --epochs 20
+docker run --gpus all -it \
+  -e R2_ENDPOINT=https://<accountid>.r2.cloudflarestorage.com \
+  -e R2_ACCESS_KEY=... \
+  -e R2_SECRET_KEY=... \
+  -e R2_BUCKET=... \
+  -e R2_DATASET_PATH=combined \
+  yolo-sea-train
+```
+
+L'entrypoint (`yolo_sea/scripts/docker_entrypoint.sh`) pull le dataset
+`combined` depuis R2 dans `/workspace/datasets/combined`, puis ouvre un bash
+interactif (aucune commande de train n'est lancée automatiquement).
+
+Pour enchaîner directement sur l'entraînement, ajouter la commande à la fin :
+
+```bash
+docker run --gpus all \
+  -e R2_ENDPOINT=... -e R2_ACCESS_KEY=... -e R2_SECRET_KEY=... -e R2_BUCKET=... \
+  -v "$PWD/runs:/workspace/runs" \
+  yolo-sea-train \
+  python yolo_sea/train_sea.py --dataset combined --single-cls --scale s --device 0
+```
+
+Penser à monter `runs/` en volume (`-v`) si les poids/checkpoints doivent
+survivre à la suppression du container.
+
+---
+
+## Alternative : build local + push registre
+
+Si l'instance Brev n'a pas accès à `git clone` (réseau restreint) ou si vous
+préférez réutiliser la même image sur plusieurs instances sans rebuild :
+
+```bash
+docker build -f docker/Dockerfile-sea-train -t yolo-sea-train .
+docker tag yolo-sea-train <registre>/<user>/yolo-sea-train:latest
+docker push <registre>/<user>/yolo-sea-train:latest
+# puis sur l'instance Brev :
+docker run --gpus all -it -e R2_ENDPOINT=... -e R2_ACCESS_KEY=... -e R2_SECRET_KEY=... -e R2_BUCKET=... \
+  <registre>/<user>/yolo-sea-train:latest
 ```

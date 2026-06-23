@@ -16,16 +16,15 @@ from ultralytics import YOLO
 
 ROOT = Path(__file__).parent
 WEIGHTS = ROOT / "weights" / "best.pt"
+BASELINE_WEIGHTS = "yolo26s.pt"  # stock, pré-entraîné COCO, téléchargé auto par ultralytics
 
-# Chargé une seule fois (pas à chaque image).
+# Chargés une seule fois (pas à chaque image).
 model = YOLO(str(WEIGHTS))
+baseline_model = YOLO(BASELINE_WEIGHTS)
 
 
-def detect(image, conf, iou, imgsz):
+def _run(model, image, conf, iou, imgsz):
     """Inférence sur une image PIL → image annotée + texte récap."""
-    if image is None:
-        return None, "Charge une image d'abord."
-
     results = model.predict(
         source=image,
         conf=conf,
@@ -35,7 +34,6 @@ def detect(image, conf, iou, imgsz):
     )
     r = results[0]
 
-    # Image annotée (boîtes + scores) en RGB pour gradio.
     annotated = r.plot()[:, :, ::-1]  # BGR (OpenCV) -> RGB
 
     n = len(r.boxes)
@@ -51,11 +49,22 @@ def detect(image, conf, iou, imgsz):
     return annotated, summary
 
 
+def detect(image, conf, iou, imgsz):
+    """Inférence comparée : modèle custom (best.pt) vs baseline YOLO26s (COCO)."""
+    if image is None:
+        return None, "Charge une image d'abord.", None, "Charge une image d'abord."
+
+    custom_img, custom_summary = _run(model, image, conf, iou, imgsz)
+    baseline_img, baseline_summary = _run(baseline_model, image, conf, iou, imgsz)
+
+    return custom_img, custom_summary, baseline_img, baseline_summary
+
+
 with gr.Blocks(title="YOLO-SEA — Détection navires") as demo:
     gr.Markdown(
         "# 🚢 YOLO-SEA — Détection de navires\n"
-        "Charge une image (RGB ou IR), le modèle entoure les cibles détectées.\n"
-        f"*Poids : `{WEIGHTS.name}` — mono-classe.*"
+        "Charge une image (RGB ou IR) : comparaison entre le modèle custom et une baseline YOLO26 standard.\n"
+        f"*Custom : `{WEIGHTS.name}` (mono-classe, fine-tuné navires) — Baseline : `{BASELINE_WEIGHTS}` (COCO, non fine-tuné).*"
     )
     with gr.Row():
         with gr.Column():
@@ -67,12 +76,19 @@ with gr.Blocks(title="YOLO-SEA — Détection navires") as demo:
             imgsz = gr.Radio([640, 960, 1280], value=640,
                              label="Résolution d'inférence (640 = entraînement)")
             btn = gr.Button("Détecter", variant="primary")
+    with gr.Row():
         with gr.Column():
-            out_img = gr.Image(label="Détections")
+            gr.Markdown("### Modèle custom (YOLO-SEA)")
+            out_img = gr.Image(label="Détections — custom")
             out_txt = gr.Markdown()
+        with gr.Column():
+            gr.Markdown("### Baseline YOLO26s (COCO)")
+            out_img_baseline = gr.Image(label="Détections — baseline")
+            out_txt_baseline = gr.Markdown()
 
-    btn.click(detect, [inp, conf, iou, imgsz], [out_img, out_txt])
-    inp.upload(detect, [inp, conf, iou, imgsz], [out_img, out_txt])
+    outputs = [out_img, out_txt, out_img_baseline, out_txt_baseline]
+    btn.click(detect, [inp, conf, iou, imgsz], outputs)
+    inp.upload(detect, [inp, conf, iou, imgsz], outputs)
 
 
 if __name__ == "__main__":

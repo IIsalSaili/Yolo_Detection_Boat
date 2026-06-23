@@ -174,14 +174,14 @@ Le modèle sera multi-tâche avec têtes activées progressivement selon la dist
 - Chaque tête greffée sur les features du détecteur (pas dans le backbone)
 - Loss maskée pour les têtes sans label dans le batch courant
 - Cascade conditionnelle à l'inférence (seuil sur taille de boîte en pixels)
-- Référence : YOLOv8-pose pour la plomberie keypoints
+- Référence : tête pose (keypoints) standard pour la plomberie
 
 ---
 
 ## Phase 6 — Migration YOLO26-SEA (✅)
 
 > Issue de l'étude d'architecture `yolo_sea/reports/recherche_architecture.md` (état de l'art 2024–2026).
-> Le projet utilise désormais uniquement **YOLO26-SEA** (YOLOv8-SEA a été retiré).
+> Le projet utilise désormais uniquement **YOLO26-SEA**.
 
 ### Architecture — `cfg/models/26/yolo26-sea.yaml`
 - **Backbone YOLO26** (C3k2 / SPPF / C2PSA) + **SESA** (idx 9, avant SPPF)
