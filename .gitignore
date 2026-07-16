@@ -220,3 +220,16 @@ tkt.txt
 # YOLO-SEA Reorganized Folders
 /yolo_sea/weights/
 /yolo_sea/config/tkt.txt
+
+# Claude Code local config / session data (never on git)
+.claude/
+
+# Personal working notes (not project deliverables)
+/AVANCEMENT.md
+/CLAUDE.md
+/INSTRUCTIONS_BREV.md
+
+# VitePress docs build output
+/docs-site/.vitepress/dist/
+/docs-site/.vitepress/cache/
+/docs-site/node_modules/

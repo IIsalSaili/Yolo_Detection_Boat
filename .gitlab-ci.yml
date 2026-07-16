@@ -1,0 +1,35 @@
+include:
+  - project: "Admin_lab/pipeline"
+    ref: main
+    file: "/standard-pipeline.yml"
+
+variables:
+  PROJECT_TYPE: "react-python"
+
+  IMAGE_NODE: "node:20-alpine"
+  IMAGE_PYTHON: "python:3.10-slim"
+
+  # Aria a package.json, package-lock.json, requirements.txt, api.py et main.py à la racine
+  REACT_PROJECT_DIR: "."
+  PYTHON_PROJECT_DIR: "."
+
+  REACT_BUILD_ENABLED: "true"
+  REACT_TEST_ENABLED: "true"
+
+  PYTHON_BUILD_ENABLED: "true"
+  PYTHON_BUILD_INSTALL_DEPS: "false"
+  PYTHON_TEST_ENABLED: "false"
+
+  PYTHON_COMPILE_TARGETS: "api.py main.py tools eval tests"
+
+  VERIFY_VERSION: "false"
+  REQUIRE_VERSION_BUMP: "false"
+  AUTO_TAG: "false"
+
+  SONAR_ENABLED: "false"
+  DEFECTDOJO_ENABLED: "false"
+  GITLEAKS_ENABLED: "true"
+
+  GPU_REQUIRED: "false"
+  OLLAMA_ENABLED: "false"
+  AI_MODEL: "qwen2.5:7b"

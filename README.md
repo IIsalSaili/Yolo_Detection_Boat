@@ -51,6 +51,29 @@ Request an Enterprise License for commercial use at [Ultralytics Licensing](http
 
 See below for quickstart installation and usage examples. For comprehensive guidance on training, validation, prediction, and deployment, refer to our full [Ultralytics Docs](https://docs.ultralytics.com/).
 
+### 🚢 YOLO26-SEA project docs (this repo)
+
+This fork implements **YOLO26-SEA**, a long-distance ship detection model built on YOLO26 with the
+SESA attention block, a BiFPN neck, and Soft-NMS (see [`CLAUDE.md`](CLAUDE.md) for the full spec).
+The dedicated documentation site (architecture, module-by-module changes vs stock YOLO26, dataset
+taxonomy) lives in [`docs-site/`](docs-site/) and is built with [VitePress](https://vitepress.dev/).
+
+To run it locally:
+
+```bash
+cd docs-site
+npm install
+npm run docs:dev       # dev server with hot reload, default: http://localhost:5173
+```
+
+To build the static site for deployment:
+
+```bash
+cd docs-site
+npm run docs:build     # outputs to docs-site/docs/.vitepress/dist
+npm run docs:preview   # preview the production build locally
+```
+
 <details open>
 <summary>Install</summary>
 
