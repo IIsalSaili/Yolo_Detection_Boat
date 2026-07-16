@@ -27,13 +27,17 @@ Input 640×640 (ou 1280×1280 pour cibles très lointaines)
 
 ## Échelles supportées
 
-D'après `scales` dans le YAML, seules **n** (nano) et **s** (small) sont ciblées pour ce projet, en
-raison de la contrainte matérielle (voir mémoire projet) :
+Le fichier `yolo26-sea.yaml` déclare les 5 scales standard (`n`, `s`, `m`, `l`, `x`), on se cantonne ici à s et n, dans un soucis de limitation mémoire pour l'usage dans un système embarqué. 
+
 
 ```yaml
-scales:
+scales: # 'n' and 's' are the supported targets for this project (hardware constraint)
+  # [depth, width, max_channels]
   n: [0.50, 0.25, 1024]
   s: [0.50, 0.50, 1024]
+  m: [0.50, 1.00, 512]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.50, 512]
 ```
 
 ## Points clés vs YOLO26 stock
