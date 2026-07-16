@@ -17,6 +17,11 @@ Examples:
     >>> subprocess.run(f"onnxslim {f} {f} && open {f}", shell=True, check=True)  # pip install onnxslim
 """
 
+from .attention import (
+    SESA,
+    SENetV2,
+    SimAM,
+)
 from .block import (
     C1,
     C2,
@@ -61,11 +66,6 @@ from .block import (
     ResNetLayer,
     SCDown,
     TorchVision,
-)
-from .attention import (
-    SESA,
-    SENetV2,
-    SimAM,
 )
 from .conv import (
     CBAM,
@@ -129,6 +129,7 @@ __all__ = (
     "OBB",
     "OBB26",
     "PSA",
+    "SESA",
     "SPP",
     "SPPELAN",
     "SPPF",
@@ -136,9 +137,9 @@ __all__ = (
     "AConv",
     "ADown",
     "Attention",
+    "BNContrastiveHead",
     "BiFPNAdd2",
     "BiFPNAdd3",
-    "BNContrastiveHead",
     "Bottleneck",
     "BottleneckCSP",
     "C2f",
@@ -185,12 +186,11 @@ __all__ = (
     "RepVGGDW",
     "ResNetLayer",
     "SCDown",
-    "SESA",
     "SENetV2",
-    "SimAM",
     "Segment",
     "Segment26",
     "SemanticSegment",
+    "SimAM",
     "SpatialAttention",
     "TorchVision",
     "TransformerBlock",

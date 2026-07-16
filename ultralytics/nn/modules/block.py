@@ -2078,10 +2078,9 @@ class RealNVP(nn.Module):
 class BiFPNAdd2(nn.Module):
     """Weighted fusion of 2 feature maps (BiFPN fast normalized fusion).
 
-    Implements ``out = (w0 * x0 + w1 * x1) / (w0 + w1 + eps)`` with non-negative learnable weights
-    (BiFPN, https://arxiv.org/abs/1911.09070). All inputs must share the same channel count and
-    spatial size; the output keeps that channel count. Used at neck nodes that fuse an input feature
-    with a single resized feature.
+    Implements ``out = (w0 * x0 + w1 * x1) / (w0 + w1 + eps)`` with non-negative learnable weights (BiFPN,
+    https://arxiv.org/abs/1911.09070). All inputs must share the same channel count and spatial size; the output keeps
+    that channel count. Used at neck nodes that fuse an input feature with a single resized feature.
     """
 
     def __init__(self, eps: float = 1e-4):

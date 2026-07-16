@@ -190,9 +190,9 @@ def wasserstein_similarity(
 ) -> torch.Tensor:
     """Normalized Gaussian Wasserstein Distance similarity between bounding boxes.
 
-    Boxes are modeled as 2D Gaussians N(center, diag(w/2, h/2)^2); the similarity is
-    ``exp(-sqrt(W2^2) / C)`` where W2 is the 2nd-order Wasserstein distance between the Gaussians.
-    Returns values in (0, 1], shaped like ``bbox_iou`` output (last dim kept).
+    Boxes are modeled as 2D Gaussians N(center, diag(w/2, h/2)^2); the similarity is ``exp(-sqrt(W2^2) / C)`` where W2
+    is the 2nd-order Wasserstein distance between the Gaussians. Returns values in (0, 1], shaped like ``bbox_iou``
+    output (last dim kept).
 
     Args:
         box1 (torch.Tensor): Boxes in (x1, y1, x2, y2) format, last dimension 4, in **pixel** units.
