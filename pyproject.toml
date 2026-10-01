@@ -141,7 +141,7 @@ solutions = [
     "setuptools>=80.0.0,<83.0.0; python_version >= '3.9'",  # openai-clip imports pkg_resources.packaging, removed in setuptools>=81
     "streamlit>=1.51.0; python_version >= '3.10'",    # for live inference on web browser, i.e `yolo streamlit-predict`
     "streamlit>=1.29.0,<1.51.0; python_version < '3.10' and (platform_machine != 'aarch64' or platform_system != 'Linux')",
-    "flask>=3.0.1",  # for similarity search solution
+    "flask>=3.1.3",  # for similarity search solution
 ]
 logging = [
     "wandb", # https://docs.ultralytics.com/integrations/weights-biases/
