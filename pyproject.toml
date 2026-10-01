@@ -134,7 +134,7 @@ export = [
     "ultralytics[export-coreml]",
 ]
 solutions = [
-    "shapely>=2.0.0",    # shapely for point and polygon data matching
+    "shapely>=2.1.2",    # shapely for point and polygon data matching
     "lap>=0.5.12",  # for solution tracking linear assignment
     "faiss-cpu",  # for similarity search
     "openai-clip>=1.0.1",  # for similarity search text/image embeddings
